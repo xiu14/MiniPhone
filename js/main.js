@@ -3,7 +3,7 @@ console.log('Main.js loading...');
 import { loadFromLocalStorage } from './core/storage.js';
 import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
 import { handleAvatarUpload } from './core/utils.js';
-import { initSettings } from './apps/settings.js?v=1';
+import { initSettings } from './apps/settings.js?v=21';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
@@ -18,8 +18,9 @@ import {
     renderCharacterGrid, openCharacterSelector, addNewCharacter,
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
-    regenerateCharBrowser, regenerateCharSMS, regenerateCharX
-} from './apps/character.js?v=6';
+    regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
+    regenerateCharSecretGallery
+} from './apps/character.js?v=21';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -221,4 +222,5 @@ function bindGlobalListeners() {
     document.getElementById('regenerate-char-browser-btn').addEventListener('click', regenerateCharBrowser);
     document.getElementById('regenerate-char-sms-btn').addEventListener('click', regenerateCharSMS);
     document.getElementById('regenerate-char-x-btn').addEventListener('click', regenerateCharX);
+    document.getElementById('regenerate-char-secret-gallery-btn').addEventListener('click', regenerateCharSecretGallery);
 }

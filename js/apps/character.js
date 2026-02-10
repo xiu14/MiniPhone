@@ -133,6 +133,10 @@ export function openCharApp(appName) {
             document.getElementById('char-x-screen').classList.add('active');
             renderCharX();
             break;
+        case 'calculator':
+            document.getElementById('char-calculator-screen').classList.add('active');
+            renderCharCalculator();
+            break;
     }
 }
 
@@ -445,6 +449,117 @@ export async function regenerateCharX() {
             char.xFeed = safeParseJSON(result); if (!char.xFeed) return;
             saveToLocalStorage();
             renderCharX();
+        } catch (e) { console.error(e); }
+    }
+}
+
+
+// ========== Calculator & Secret Gallery ==========
+let calcValue = '0';
+
+export function renderCharCalculator() {
+    calcValue = '0';
+    updateCalcDisplay();
+    // Expose valid input function globally for HTML onclick
+    window.calcInput = (val) => {
+        if (val === 'C') {
+            calcValue = '0';
+        } else if (val === '±') {
+             if (calcValue !== '0') {
+                 if (calcValue.startsWith('-')) calcValue = calcValue.substring(1);
+                 else calcValue = '-' + calcValue;
+             }
+        } else if (val === '=') {
+            if (calcValue === '1069') {
+                // Unlock Secret Gallery
+                const screen = document.getElementById('char-calculator-screen');
+                if(screen) screen.classList.remove('active');
+                const secret = document.getElementById('char-secret-gallery-screen');
+                if(secret) secret.classList.add('active');
+                renderCharSecretGallery();
+                calcValue = '0';
+                return;
+            }
+            try {
+                // Safe eval replacement
+                let expr = calcValue.replace(/×/g, '*').replace(/÷/g, '/');
+                // Basic security check
+                if (/[^0-9+\-*/.%]/.test(expr)) {
+                    calcValue = 'Error';
+                } else {
+                    calcValue = eval(expr) + '';
+                }
+            } catch (e) {
+                calcValue = 'Error';
+            }
+        } else if (['+','-','*','/','%'].includes(val)) {
+             calcValue += val;
+        } else {
+            if (calcValue === '0' && val !== '.') calcValue = val;
+            else calcValue += val;
+        }
+        updateCalcDisplay();
+    };
+}
+
+function updateCalcDisplay() {
+    const display = document.getElementById('calc-display');
+    if (display) display.textContent = calcValue;
+}
+
+export function renderCharSecretGallery() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-secret-gallery-grid');
+    if (!char || !char.secretGallery || char.secretGallery.length === 0) {
+        container.innerHTML = `<div class="empty-state" style="grid-column:span 2; padding:40px; text-align:center; color:#666;">
+            <div style="font-size:40px;margin-bottom:10px;">🔒</div>
+            <div class="text">暂无私密照片<br>点击右上角 🔄 获取最新云端同步<br><span style="font-size:10px;opacity:0.6;">(Contains NSFW)</span></div>
+        </div>`;
+        return;
+    }
+
+    container.innerHTML = char.secretGallery.map((item, index) => `
+        <div class="secret-item" onclick="this.classList.toggle('revealed')">
+            <div class="secret-blur"></div>
+            <div class="secret-content">
+                <div class="secret-type">${item.type || 'Photo'}</div>
+                <div class="secret-text">${item.desc}</div>
+                <div class="secret-time">${item.time || ''}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+export async function regenerateCharSecretGallery() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-secret-gallery-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳';
+
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成私密相册内容（4-6张）。
+    
+场景设置：这是角色手机里的隐藏相册（Privately Locked Gallery）。
+内容要求：
+1. **BL向 / 男男向**：针对男性角色的私密视角（如果是女性角色，则按女性视角，但本应用预设为BL/乙女向）。
+2. **NSFW / 擦边 / R18**：描述必须极其露骨、诱惑。包括但不限于：浴室自拍、床照、特定部位特写、事后照、胶衣/BDSM装备照等。
+3. **文字描述画面**： "desc"字段需要用简练但色气的文字描述这张照片的内容（因为是伪装相册，实际上不显示图片，只显示这段文字让用户脑补）。
+4. **多样化**：包含不同的时间点和场景。
+
+只返回JSON数组，不要Markdown: [{"type": "照片/视频", "desc": "极具诱惑力的画面描述...", "time": "凌晨2:30"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = originalText;
+
+    if (result) {
+        try {
+            const data = safeParseJSON(result);
+            if (data && Array.isArray(data)) {
+                char.secretGallery = data;
+                saveToLocalStorage();
+                renderCharSecretGallery();
+            }
         } catch (e) { console.error(e); }
     }
 }

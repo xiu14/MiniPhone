@@ -124,7 +124,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=6');
+            await import('./js/main.js?v=21');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -436,6 +436,10 @@
                             <div class="icon-bg" style="font-weight:900;font-family:serif;">𝕏</div>
                             <span class="label">X</span>
                         </div>
+                        <div class="app-icon" onclick="openCharApp('calculator')">
+                            <div class="icon-bg">🔢</div>
+                            <span class="label">计算器</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -498,6 +502,56 @@
                     <span class="action-btn" id="regenerate-char-x-btn">🔄</span>
                 </div>
                 <div id="char-x-feed" class="list-container"></div>
+            </div>
+
+            <!-- 角色计算器界面 -->
+            <div id="char-calculator-screen" class="char-screen">
+                <div class="calculator-display" id="calc-display">0</div>
+                <div class="calculator-keyboard">
+                    <div class="calc-row">
+                        <button class="calc-btn op" onclick="calcInput('C')">C</button>
+                        <button class="calc-btn op" onclick="calcInput('±')">±</button>
+                        <button class="calc-btn op" onclick="calcInput('%')">%</button>
+                        <button class="calc-btn op-orange" onclick="calcInput('/')">÷</button>
+                    </div>
+                    <div class="calc-row">
+                        <button class="calc-btn" onclick="calcInput('7')">7</button>
+                        <button class="calc-btn" onclick="calcInput('8')">8</button>
+                        <button class="calc-btn" onclick="calcInput('9')">9</button>
+                        <button class="calc-btn op-orange" onclick="calcInput('*')">×</button>
+                    </div>
+                    <div class="calc-row">
+                        <button class="calc-btn" onclick="calcInput('4')">4</button>
+                        <button class="calc-btn" onclick="calcInput('5')">5</button>
+                        <button class="calc-btn" onclick="calcInput('6')">6</button>
+                        <button class="calc-btn op-orange" onclick="calcInput('-')">-</button>
+                    </div>
+                    <div class="calc-row">
+                        <button class="calc-btn" onclick="calcInput('1')">1</button>
+                        <button class="calc-btn" onclick="calcInput('2')">2</button>
+                        <button class="calc-btn" onclick="calcInput('3')">3</button>
+                        <button class="calc-btn op-orange" onclick="calcInput('+')">+</button>
+                    </div>
+                    <div class="calc-row">
+                        <button class="calc-btn zero" onclick="calcInput('0')">0</button>
+                        <button class="calc-btn" onclick="calcInput('.')">.</button>
+                        <button class="calc-btn op-orange" onclick="calcInput('=')">=</button>
+                    </div>
+                    <div style="width:100%;text-align:center;margin-top:20px;">
+                        <span class="back-btn-calc" onclick="switchToCharHomeScreen()">🏠 返回</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 私密相册界面 -->
+            <div id="char-secret-gallery-screen" class="char-screen" style="background:#111;">
+                <div class="header" style="background:rgba(0,0,0,0.8);border-bottom:1px solid #333;">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span style="color:#ff4081;font-weight:bold;">Private Gallery</span>
+                    <span class="action-btn" id="regenerate-char-secret-gallery-btn">🔄</span>
+                </div>
+                <div id="char-secret-gallery-grid" class="list-container"
+                    style="padding:15px;display:grid;grid-template-columns:1fr 1fr;gap:15px;"></div>
             </div>
         </div>
 
@@ -592,7 +646,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v19 (Button Fixes)</span>
+                        <span style="color:#888;">v21 (Secret Calc)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

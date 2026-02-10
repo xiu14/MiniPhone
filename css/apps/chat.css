@@ -231,7 +231,7 @@
 #chat-input-area {
     display: flex;
     gap: 8px;
-    padding: 10px 15px 20px;
+    padding: 10px 15px calc(20px + env(safe-area-inset-bottom, 0px));
     background-color: var(--bg-secondary);
     border-top: 1px solid var(--border-color);
     align-items: flex-end;
