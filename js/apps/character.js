@@ -397,11 +397,8 @@ export async function regenerateCharX() {
     const btn = document.getElementById('regenerate-char-x-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 时间线上关注的博主和推文（6-8条）。
-内容应完全反映角色的个人喜好、性癖和兴趣偏向，风格大胆、大尺度、露骨。
-包含不同类型的博主（擦边内容创作者、小众社区等）。
-每条推文应有不同的博主。
-返回JSON数组: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（6-8条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
+只返回JSON数组，不要任何解释文字: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';

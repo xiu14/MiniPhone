@@ -122,7 +122,12 @@ export async function generateCharContent(prompt) {
             JSON.parse(content);
         } catch {
             const match = content.match(/\[[\s\S]*\]/);
-            if (match) content = match[0];
+            if (match) {
+                content = match[0];
+            } else {
+                console.warn('AI 未返回有效 JSON:', content.substring(0, 100));
+                return null;
+            }
         }
         return content;
     } catch (e) {
