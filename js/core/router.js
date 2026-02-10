@@ -7,6 +7,12 @@ export function showScreen(screenId) {
     const target = document.getElementById(screenId);
     if (target) target.classList.add('active');
 
+    // Hide status bar in chat interface to save space on mobile
+    const statusBar = document.getElementById('status-bar');
+    if (statusBar) {
+        statusBar.style.display = (screenId === 'chat-interface-screen') ? 'none' : '';
+    }
+
     // trigger render if needed
     if (screenId === 'moments-screen') {
         // We need to ensure renderMoments is available. 

@@ -3,7 +3,7 @@ console.log('Main.js loading...');
 import { loadFromLocalStorage } from './core/storage.js';
 import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
 import { handleAvatarUpload } from './core/utils.js';
-import { initSettings } from './apps/settings.js?v=21';
+import { initSettings } from './apps/settings.js?v=22';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
@@ -20,7 +20,7 @@ import {
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js?v=21';
+} from './apps/character.js?v=22';
 
 // ========== Initialization ========== //
 async function initApp() {
