@@ -1,0 +1,208 @@
+/* Apps CSS: Moments */
+
+.moment-item {
+    background-color: var(--bg-secondary);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.3s ease;
+}
+
+.moment-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.moment-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: var(--bg-tertiary);
+    flex-shrink: 0;
+}
+
+.moment-meta {
+    flex: 1;
+}
+
+.moment-delete-btn {
+    font-size: 18px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.2s, color 0.2s;
+    padding: 2px 6px;
+    line-height: 1;
+}
+
+.moment-delete-btn:hover {
+    opacity: 1;
+    color: var(--accent-red);
+}
+
+.moment-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.moment-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.moment-content {
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.6;
+    margin-bottom: 12px;
+    word-wrap: break-word;
+}
+
+.moment-actions {
+    display: flex;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.moment-like-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s, transform 0.15s;
+    user-select: none;
+}
+
+.moment-like-btn:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.moment-like-btn:active {
+    transform: scale(0.9);
+}
+
+.moment-like-btn.liked {
+    color: var(--accent-red);
+}
+
+/* 朋友圈评论 */
+.moment-comments {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background-color: var(--bg-tertiary);
+    border-radius: 8px;
+}
+
+.moment-comment {
+    padding: 5px 0;
+    font-size: 14px;
+    line-height: 1.5;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    border-radius: 4px;
+}
+
+.moment-comment+.moment-comment {
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.moment-comment:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.comment-name {
+    color: var(--accent-color);
+    font-weight: 600;
+    margin-right: 6px;
+}
+
+.comment-text {
+    color: var(--text-primary);
+}
+
+.moment-comments-loading {
+    margin-top: 10px;
+    padding: 10px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: center;
+    animation: pulse 1.2s infinite;
+}
+
+/* 评论输入区域 */
+.moment-comment-input-area {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: center;
+}
+
+.moment-comment-input {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: 18px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.moment-comment-input:focus {
+    border-color: var(--accent-color);
+}
+
+.moment-comment-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.moment-comment-send {
+    padding: 6px 14px;
+    border-radius: 16px;
+    border: none;
+    background-color: var(--accent-color);
+    color: #fff;
+    font-size: 13px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+
+.moment-comment-send:active {
+    opacity: 0.7;
+}
+
+/* 评论按钮 */
+.moment-comment-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s;
+    user-select: none;
+    margin-left: 12px;
+}
+
+.moment-comment-btn:hover {
+    background-color: var(--bg-tertiary);
+}
+
+/* 回复标记 */
+.comment-reply-to {
+    color: var(--text-secondary);
+    font-size: 13px;
+}

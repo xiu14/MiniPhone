@@ -1,0 +1,221 @@
+/* Main Entry Point */
+console.log('Main.js loading...');
+import { loadFromLocalStorage } from './core/storage.js';
+import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
+import { handleAvatarUpload } from './core/utils.js';
+import { initSettings } from './apps/settings.js';
+import {
+    renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
+    openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
+    initEmojiPanel, toggleEmojiPanel, insertEmoji,
+    generateSummary, openSummaryApp, openSummaryDetail
+} from './apps/chat.js';
+import {
+    renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
+    commentOnMoment, showReplyInput, focusCommentInput
+} from './apps/moments.js';
+import {
+    renderCharacterGrid, openCharacterSelector, addNewCharacter,
+    openCharacterPhone, openCharApp,
+    regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
+    regenerateCharBrowser, regenerateCharSMS, regenerateCharX
+} from './apps/character.js';
+
+// ========== Initialization ========== //
+async function initApp() {
+    console.log('App Initializing...');
+    await loadFromLocalStorage();
+
+    // UI Updates
+    updateStatusBar();
+    updateHomeClock();
+    setInterval(updateStatusBar, 60000);
+    setInterval(updateHomeClock, 1000);
+
+    // Initial Renders
+    renderChatList();
+    renderCharacterGrid();
+    initEmojiPanel();
+    initSettings();
+
+    bindGlobalListeners();
+    console.log('App Initialized successfully');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => initApp());
+} else {
+    initApp();
+}
+
+// ========== Global Helpers for HTML onclick ========== //
+window.showScreen = showScreen;
+window.switchToCharHomeScreen = switchToCharHomeScreen;
+window.switchToMyPhone = switchToMyPhone;
+window.openChatList = () => {
+    renderChatList();
+    showScreen('chat-list-screen');
+};
+
+// ... (existing helper exports) ...
+
+// Chat Interface
+document.getElementById('back-to-list-btn').addEventListener('click', () => {
+    renderChatList();
+    showScreen('chat-list-screen');
+});
+window.openChat = openChat;
+window.addNewChat = addNewChat;
+window.openChatSettings = openChatSettings;
+window.saveChatSettings = saveChatSettings;
+window.clearChatData = clearChatData;
+window.deleteCurrentChat = deleteCurrentChat;
+window.sendMessage = sendMessage;
+window.sendWithoutReply = sendWithoutReply;
+window.toggleEmojiPanel = toggleEmojiPanel;
+window.insertEmoji = insertEmoji;
+
+// Summaries
+window.openSummaryApp = openSummaryApp;
+window.openSummaryDetail = openSummaryDetail;
+
+// Character
+window.openCharacterSelector = openCharacterSelector;
+window.addNewCharacter = addNewCharacter;
+window.openCharacterPhone = openCharacterPhone;
+window.openCharApp = openCharApp;
+window.regenerateCharQQ = regenerateCharQQ;
+window.regenerateCharAlbum = regenerateCharAlbum;
+window.regenerateCharMemo = regenerateCharMemo;
+window.regenerateCharBrowser = regenerateCharBrowser;
+window.regenerateCharSMS = regenerateCharSMS;
+window.regenerateCharX = regenerateCharX;
+
+// Moments
+window.renderMoments = renderMoments; // exposed if needed by router
+window.postMoment = postMoment;
+window.generateMoments = generateMoments;
+window.likeMoment = likeMoment;
+window.deleteMoment = deleteMoment;
+window.commentOnMoment = commentOnMoment;
+window.showReplyInput = showReplyInput;
+window.focusCommentInput = focusCommentInput;
+
+// Utils
+window.handleAvatarUpload = (input, targetId, previewId) => {
+    handleAvatarUpload(input, (base64) => {
+        document.getElementById(targetId).value = base64;
+        const preview = document.getElementById(previewId);
+        preview.src = base64;
+        preview.style.display = 'block';
+    });
+};
+
+// ========== Local Helpers ========== //
+// ========== Local Helpers ========== //
+function updateStatusBar() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const el = document.getElementById('status-bar-time');
+    if (el) el.textContent = timeStr;
+
+    // Simulate battery
+    const battery = Math.floor(Math.random() * 30) + 70;
+    const text = document.querySelector('#status-bar .battery-text');
+    const level = document.querySelector('#status-bar .battery-level');
+
+    if (text) {
+        text.textContent = battery + '%';
+    } else {
+        console.error('Battery text element not found');
+    }
+
+    if (level) {
+        level.style.width = battery + '%';
+    }
+}
+
+function updateHomeClock() {
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    const dateStr = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long' });
+
+    const homeTime = document.getElementById('home-main-time');
+    const homeDate = document.getElementById('home-main-date');
+    const charTime = document.getElementById('char-main-time');
+    const charDate = document.getElementById('char-main-date');
+
+    if (homeTime) homeTime.textContent = timeStr;
+    if (homeDate) homeDate.textContent = dateStr;
+    if (charTime) charTime.textContent = timeStr;
+    if (charDate) charDate.textContent = dateStr;
+}
+
+function bindGlobalListeners() {
+    // Add Chat Modal
+    document.getElementById('add-chat-btn').addEventListener('click', () => {
+        document.getElementById('add-chat-modal').classList.add('active');
+        document.getElementById('new-chat-avatar-preview').style.display = 'none';
+        document.getElementById('new-chat-avatar-preview').src = '';
+        document.getElementById('new-chat-file').value = '';
+    });
+
+    document.getElementById('cancel-add-chat-btn').addEventListener('click', () => {
+        document.getElementById('add-chat-modal').classList.remove('active');
+    });
+
+    document.getElementById('confirm-add-chat-btn').addEventListener('click', addNewChat);
+
+    // Chat Interface
+    document.getElementById('back-to-list-btn').addEventListener('click', () => {
+        showScreen('chat-list-screen');
+    });
+
+    document.getElementById('send-btn').addEventListener('click', sendWithoutReply);
+    document.getElementById('wait-reply-btn').addEventListener('click', sendMessage);
+    document.getElementById('chat-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendWithoutReply();
+        }
+    });
+
+    // Chat Settings
+    document.getElementById('chat-settings-btn').addEventListener('click', openChatSettings);
+    document.getElementById('cancel-chat-settings-btn').addEventListener('click', () => {
+        document.getElementById('chat-settings-modal').classList.remove('active');
+    });
+    document.getElementById('save-chat-settings-btn').addEventListener('click', saveChatSettings);
+    document.getElementById('clear-chat-data-btn').addEventListener('click', clearChatData);
+    document.getElementById('delete-chat-btn').addEventListener('click', deleteCurrentChat);
+
+    // Add Character
+    document.getElementById('add-character-btn').addEventListener('click', () => {
+        document.getElementById('add-character-modal').classList.add('active');
+        document.getElementById('new-char-avatar-preview').style.display = 'none';
+        document.getElementById('new-char-avatar-preview').src = '';
+        document.getElementById('new-char-file').value = '';
+    });
+    document.getElementById('cancel-add-char-btn').addEventListener('click', () => {
+        document.getElementById('add-character-modal').classList.remove('active');
+    });
+    document.getElementById('confirm-add-char-btn').addEventListener('click', addNewCharacter);
+
+    // Moments
+    document.getElementById('post-moment-btn').addEventListener('click', () => {
+        document.getElementById('post-moment-modal').classList.add('active');
+    });
+    document.getElementById('cancel-post-moment-btn').addEventListener('click', () => {
+        document.getElementById('post-moment-modal').classList.remove('active');
+    });
+    document.getElementById('confirm-post-moment-btn').addEventListener('click', postMoment);
+    document.getElementById('generate-moments-btn').addEventListener('click', generateMoments);
+
+    // Emoji
+    document.getElementById('emoji-btn').addEventListener('click', toggleEmojiPanel);
+
+    // Character App Regenerate Buttons
+    document.getElementById('regenerate-char-browser-btn').addEventListener('click', regenerateCharBrowser);
+    document.getElementById('regenerate-char-sms-btn').addEventListener('click', regenerateCharSMS);
+    document.getElementById('regenerate-char-x-btn').addEventListener('click', regenerateCharX);
+}

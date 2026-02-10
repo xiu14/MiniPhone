@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>MiniPhone</title>
+    <meta name="description" content="AI 模拟手机聊天应用">
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="stylesheet" href="css/main.css">
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./service-worker.js')
+                .then(reg => console.log('✅ Service Worker 注册成功:', reg.scope))
+                .catch(err => console.warn('⚠️ Service Worker 注册失败:', err));
+        }
+    </script>
+    <script>
+        window.onerror = function (msg, url, line, col, error) {
+            if (msg.includes('ResizeObserver')) return;
+            alert("JS Error: " + msg + "\nFile: " + url + "\nLine: " + line);
+            console.error("JS Error:", msg, error);
+        };
+        window.addEventListener('unhandledrejection', function (event) {
+            alert("Unhandled Promise Rejection: " + event.reason);
+        });
+    </script>
+    <style>
+        #login-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #0a0a0a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.4s;
+        }
+
+        #login-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .login-box {
+            background: rgba(30, 30, 30, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 32px;
+            width: min(320px, 85vw);
+            text-align: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .login-box h2 {
+            color: #fff;
+            font-size: 22px;
+            margin: 0 0 8px;
+            font-weight: 600;
+        }
+
+        .login-box p {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 13px;
+            margin: 0 0 28px;
+        }
+
+        .login-box input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 12px 16px;
+            margin-bottom: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .login-box input:focus {
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+
+        .login-box input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+
+        .login-box button:active {
+            transform: scale(0.97);
+            opacity: 0.9;
+        }
+
+        .login-error {
+            color: #ff6b6b;
+            font-size: 13px;
+            margin-top: 10px;
+            min-height: 18px;
+        }
+    </style>
+    <script type="module">
+        console.log("Starting module load...");
+        try {
+            await import('./js/main.js');
+            console.log("Module loaded successfully");
+        } catch (e) {
+            console.error("Module Load Failed:", e);
+            alert("模块加载失败 (Module Load Failed):\n" + e.message + "\n\n请检查控制台(Console)获取详细信息。");
+        }
+    </script>
+</head>
+
+<body>
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+        <div class="login-box">
+            <h2>🔒 MiniPhone</h2>
+            <p>请输入凭据以继续</p>
+            <input type="text" id="login-user" placeholder="用户名" autocomplete="username">
+            <input type="password" id="login-pass" placeholder="密码" autocomplete="current-password">
+            <button id="login-btn">登录</button>
+            <div class="login-error" id="login-error"></div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            const HASH = 'b4f39b221c19a791572d1028635cdcac838c408a3c259ae9a74d2b48f870263f';
+            const overlay = document.getElementById('login-overlay');
+
+            if (sessionStorage.getItem('mp_auth') === HASH) {
+                overlay.style.display = 'none';
+                return;
+            }
+
+            async function sha256(str) {
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+                return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+            }
+
+            async function doLogin() {
+                const user = document.getElementById('login-user').value.trim();
+                const pass = document.getElementById('login-pass').value;
+                const hash = await sha256(user + ':' + pass);
+                if (hash === HASH) {
+                    sessionStorage.setItem('mp_auth', HASH);
+                    overlay.classList.add('hidden');
+                    setTimeout(() => overlay.style.display = 'none', 400);
+                } else {
+                    document.getElementById('login-error').textContent = '用户名或密码错误';
+                }
+            }
+
+            document.getElementById('login-btn').addEventListener('click', doLogin);
+            document.getElementById('login-pass').addEventListener('keypress', e => {
+                if (e.key === 'Enter') doLogin();
+            });
+        })();
+    </script>
+
+    <div id="phone-screen" class="dark-mode">
+        <!-- 状态栏 -->
+        <div id="status-bar">
+            <span id="status-bar-time">12:00</span>
+            <div id="status-bar-battery" class="battery-container">
+                <span class="battery-text">--%</span>
+                <div class="battery-icon">
+                    <div class="battery-level"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 主屏幕 ========== -->
+        <div id="home-screen" class="screen active">
+            <div id="home-clock-container">
+                <div id="home-main-time">12:00</div>
+                <div id="home-main-date">1月1日 星期一</div>
+            </div>
+            <div id="desktop-app-container">
+                <div class="desktop-app-icon" onclick="openChatList()">
+                    <div class="icon-bg-desktop">💬</div>
+                    <span class="label">消息</span>
+                </div>
+                <div class="desktop-app-icon" onclick="showScreen('moments-screen')">
+                    <div class="icon-bg-desktop">📷</div>
+                    <span class="label">朋友圈</span>
+                </div>
+                <div class="desktop-app-icon" onclick="openSummaryApp()">
+                    <div class="icon-bg-desktop">📚</div>
+                    <span class="label">AI 总结</span>
+                </div>
+                <div class="desktop-app-icon" onclick="openCharacterSelector()">
+                    <div class="icon-bg-desktop">📱</div>
+                    <span class="label">CPhone</span>
+                </div>
+                <div class="desktop-app-icon" onclick="showScreen('api-settings-screen')">
+                    <div class="icon-bg-desktop">⚙️</div>
+                    <span class="label">API设置</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 聊天列表 ========== -->
+        <div id="summary-app-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>AI 总结</span>
+                <span style="width: 30px;"></span>
+            </div>
+            <div id="summary-list" class="list-container"></div>
+        </div>
+
+        <!-- ========== 总结详情界面 ========== -->
+        <div id="summary-detail-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('summary-app-screen')">‹</span>
+                <span id="summary-detail-title">总结记录</span>
+                <span style="width: 30px;"></span>
+            </div>
+            <div id="summary-content" class="moment-content"
+                style="padding: 20px; white-space: pre-wrap; user-select: text;"></div>
+        </div>
+        <!-- ========== 聊天列表 ========== -->
+        <div id="chat-list-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>消息</span>
+                <span class="action-btn" id="add-chat-btn">+</span>
+            </div>
+            <div id="chat-list" class="list-container"></div>
+        </div>
+
+        <!-- ========== 聊天界面 ========== -->
+        <div id="chat-interface-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" id="back-to-list-btn">‹</span>
+                <span id="chat-header-title">聊天对象</span>
+                <span class="action-btn" id="chat-settings-btn">⋯</span>
+            </div>
+            <div id="chat-messages"></div>
+            <div id="typing-indicator">对方正在输入...</div>
+            <div id="emoji-panel">
+                <div class="emoji-tabs">
+                    <span class="emoji-tab active" data-category="smileys">😀</span>
+                    <span class="emoji-tab" data-category="gestures">👋</span>
+                    <span class="emoji-tab" data-category="hearts">❤️</span>
+                    <span class="emoji-tab" data-category="animals">🐱</span>
+                    <span class="emoji-tab" data-category="food">🍔</span>
+                    <span class="emoji-tab" data-category="objects">⚽</span>
+                </div>
+                <div class="emoji-grid" id="emoji-grid"></div>
+            </div>
+            <div id="chat-input-area">
+                <button id="emoji-btn" title="表情">😊</button>
+                <textarea id="chat-input" rows="1" placeholder="输入消息..."></textarea>
+                <div id="input-actions">
+                    <button id="wait-reply-btn" title="发送但不等待AI回复">✋</button>
+                    <button id="send-btn">发送</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 添加聊天弹窗 ========== -->
+        <div id="add-chat-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><span>添加联系人</span></div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>头像</label>
+                        <div class="avatar-upload-group">
+                            <img id="new-chat-avatar-preview" class="avatar-preview-img" style="display:none">
+                            <div class="avatar-input-row">
+                                <input type="text" id="new-chat-avatar" placeholder="图片URL 或 上传图片">
+                                <input type="file" id="new-chat-file" accept="image/*" style="display:none"
+                                    onchange="handleAvatarUpload(this, 'new-chat-avatar', 'new-chat-avatar-preview')">
+                                <button class="upload-btn"
+                                    onclick="document.getElementById('new-chat-file').click()">📂</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>名称</label>
+                        <input type="text" id="new-chat-name" placeholder="输入名称...">
+                    </div>
+                    <div class="form-group">
+                        <label>人设描述</label>
+                        <textarea id="new-chat-persona" rows="4" placeholder="描述这个角色的性格、背景..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel" id="cancel-add-chat-btn">取消</button>
+                    <button class="save" id="confirm-add-chat-btn">添加</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 聊天设置弹窗 ========== -->
+        <div id="chat-settings-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><span>聊天设置</span></div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>头像</label>
+                        <div class="avatar-upload-group">
+                            <img id="edit-chat-avatar-preview" class="avatar-preview-img" style="display:none">
+                            <div class="avatar-input-row">
+                                <input type="text" id="edit-chat-avatar" placeholder="图片URL 或 上传图片">
+                                <input type="file" id="edit-chat-file" accept="image/*" style="display:none"
+                                    onchange="handleAvatarUpload(this, 'edit-chat-avatar', 'edit-chat-avatar-preview')">
+                                <button class="upload-btn"
+                                    onclick="document.getElementById('edit-chat-file').click()">📂</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>名称</label>
+                        <input type="text" id="edit-chat-name" placeholder="输入名称...">
+                    </div>
+                    <div class="form-group">
+                        <label>人设描述</label>
+                        <textarea id="edit-chat-persona" rows="4" placeholder="描述这个角色的性格、背景..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel" id="cancel-chat-settings-btn">取消</button>
+                    <button class="action" id="clear-chat-data-btn"
+                        style="background:#ff9800;color:white;margin-right:10px;">清除数据</button>
+                    <button class="delete" id="delete-chat-btn">删除</button>
+                    <button class="save" id="save-chat-settings-btn">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 角色选择界面 ========== -->
+        <div id="character-selection-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>选择一部手机</span>
+                <span class="action-btn" id="add-character-btn">+</span>
+            </div>
+            <div id="character-grid"></div>
+        </div>
+
+        <!-- ========== 添加角色弹窗 ========== -->
+        <div id="add-character-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><span>添加角色手机</span></div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>角色头像</label>
+                        <div class="avatar-upload-group">
+                            <img id="new-char-avatar-preview" class="avatar-preview-img" style="display:none">
+                            <div class="avatar-input-row">
+                                <input type="text" id="new-char-avatar" placeholder="图片URL 或 上传图片">
+                                <input type="file" id="new-char-file" accept="image/*" style="display:none"
+                                    onchange="handleAvatarUpload(this, 'new-char-avatar', 'new-char-avatar-preview')">
+                                <button class="upload-btn"
+                                    onclick="document.getElementById('new-char-file').click()">📂</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>角色名称</label>
+                        <input type="text" id="new-char-name" placeholder="输入角色名...">
+                    </div>
+                    <div class="form-group">
+                        <label>角色人设</label>
+                        <textarea id="new-char-persona" rows="4" placeholder="描述这个角色的性格、背景..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel" id="cancel-add-char-btn">取消</button>
+                    <button class="save" id="confirm-add-char-btn">添加</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 角色手机界面 ========== -->
+        <div id="character-phone-screen" class="screen">
+            <div id="char-home-screen" class="char-screen active">
+                <div id="char-clock-container">
+                    <div id="char-main-time">12:00</div>
+                    <div id="char-main-date">1月1日 星期一</div>
+                </div>
+                <div id="char-app-grid">
+                    <div class="app-row">
+                        <div class="app-icon" onclick="openCharApp('qq')">
+                            <div class="icon-bg">💬</div>
+                            <span class="label">微信</span>
+                        </div>
+                        <div class="app-icon" onclick="openCharApp('album')">
+                            <div class="icon-bg">🖼️</div>
+                            <span class="label">相册</span>
+                        </div>
+                        <div class="app-icon" onclick="openCharApp('memo')">
+                            <div class="icon-bg">📝</div>
+                            <span class="label">备忘录</span>
+                        </div>
+                        <div class="app-icon" onclick="switchToMyPhone()">
+                            <div class="icon-bg">🏠</div>
+                            <span class="label">返回</span>
+                        </div>
+                    </div>
+                    <div class="app-row">
+                        <div class="app-icon" onclick="openCharApp('browser')">
+                            <div class="icon-bg">🌐</div>
+                            <span class="label">浏览器</span>
+                        </div>
+                        <div class="app-icon" onclick="openCharApp('sms')">
+                            <div class="icon-bg">✉️</div>
+                            <span class="label">短信</span>
+                        </div>
+                        <div class="app-icon" onclick="openCharApp('x')">
+                            <div class="icon-bg" style="font-weight:900;font-family:serif;">𝕏</div>
+                            <span class="label">X</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 角色微信界面 -->
+            <div id="char-qq-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span>微信</span>
+                    <span class="action-btn" id="regenerate-char-qq-btn">🔄</span>
+                </div>
+                <div id="char-chat-list" class="list-container"></div>
+            </div>
+
+            <!-- 角色相册界面 -->
+            <div id="char-album-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span>TA的相册</span>
+                    <span class="action-btn" id="regenerate-char-album-btn">🔄</span>
+                </div>
+                <div id="char-album-grid" class="list-container"></div>
+            </div>
+
+            <!-- 角色备忘录界面 -->
+            <div id="char-memo-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span>备忘录</span>
+                    <span class="action-btn" id="regenerate-char-memo-btn">🔄</span>
+                </div>
+                <div id="char-memo-list" class="list-container"></div>
+            </div>
+
+            <!-- 角色浏览器界面 -->
+            <div id="char-browser-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span>浏览器</span>
+                    <span class="action-btn" id="regenerate-char-browser-btn">🔄</span>
+                </div>
+                <div id="char-browser-content" class="list-container"></div>
+            </div>
+
+            <!-- 角色短信界面 -->
+            <div id="char-sms-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span>短信</span>
+                    <span class="action-btn" id="regenerate-char-sms-btn">🔄</span>
+                </div>
+                <div id="char-sms-list" class="list-container"></div>
+            </div>
+
+            <!-- 角色 X 界面 -->
+            <div id="char-x-screen" class="char-screen">
+                <div class="header">
+                    <span class="back-btn" onclick="switchToCharHomeScreen()">‹</span>
+                    <span style="font-weight:900;font-family:serif;">𝕏</span>
+                    <span class="action-btn" id="regenerate-char-x-btn">🔄</span>
+                </div>
+                <div id="char-x-feed" class="list-container"></div>
+            </div>
+        </div>
+
+        <!-- ========== 朋友圈界面 ========== -->
+        <div id="moments-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>朋友圈</span>
+                <div class="header-actions">
+                    <span class="action-btn" id="post-moment-btn" title="发朋友圈">✏️</span>
+                    <span class="action-btn" id="generate-moments-btn" title="AI生成动态">🔄</span>
+                </div>
+            </div>
+            <div id="moments-list" class="list-container"></div>
+        </div>
+
+        <!-- ========== 发朋友圈弹窗 ========== -->
+        <div id="post-moment-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><span>发朋友圈</span></div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>说点什么...</label>
+                        <textarea id="moment-content" rows="4" placeholder="这一刻的想法..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel" id="cancel-post-moment-btn">取消</button>
+                    <button class="save" id="confirm-post-moment-btn">发布</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== API 设置界面 ========== -->
+        <div id="api-settings-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>API 设置</span>
+                <span style="width: 30px;"></span>
+            </div>
+            <div class="form-container">
+                <h3>主API设置</h3>
+                <div class="form-group">
+                    <label for="proxy-url">反代地址 (不需要添加/v1)</label>
+                    <input type="text" id="proxy-url" placeholder="例如: https://api.openai.com">
+                </div>
+                <div class="form-group">
+                    <label for="api-key">API Key</label>
+                    <input type="password" id="api-key" placeholder="sk-...">
+                </div>
+                <div class="form-group">
+                    <label for="model-select">模型</label>
+                    <select id="model-select">
+                        <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        <option value="gpt-4o">gpt-4o</option>
+                        <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                    </select>
+                </div>
+                <button class="form-button" id="fetch-models-btn">拉取模型列表</button>
+
+                <hr>
+
+                <h3>用户设置</h3>
+                <div class="form-group">
+                    <label for="user-name-input">你的名字</label>
+                    <input type="text" id="user-name-input" placeholder="用户">
+                </div>
+                <div class="form-group">
+                    <label>用户头像</label>
+                    <div class="avatar-upload-group">
+                        <img id="user-avatar-preview" class="avatar-preview-img" style="display:none">
+                        <div class="avatar-input-row">
+                            <input type="text" id="user-avatar-input" placeholder="图片URL 或 上传图片">
+                            <input type="file" id="user-avatar-file" accept="image/*" style="display:none"
+                                onchange="handleAvatarUpload(this, 'user-avatar-input', 'user-avatar-preview')">
+                            <button class="upload-btn"
+                                onclick="document.getElementById('user-avatar-file').click()">📂</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>用户简介</label>
+                    <textarea id="user-bio-input" rows="3" placeholder="告诉AI关于你的信息（职业、爱好等），让回复更贴合..."></textarea>
+                </div>
+
+                <button class="form-button save-btn" id="save-api-settings-btn">保存设置</button>
+            </div>
+        </div>
+
+    </div>
+</body>
+
+</html>

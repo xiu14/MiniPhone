@@ -1,0 +1,416 @@
+/* Apps: Character Phone */
+import { state, saveToLocalStorage, getCurrentCharacter, setCurrentCharacterId } from '../core/storage.js';
+import { showScreen, switchToCharHomeScreen } from '../core/router.js';
+import { generateCharContent } from '../services/api.js';
+
+export function openCharacterSelector() {
+    renderCharacterGrid();
+    showScreen('character-selection-screen');
+}
+
+export function renderCharacterGrid() {
+    const container = document.getElementById('character-grid');
+    const { characters } = state;
+
+    if (characters.length === 0) {
+        container.innerHTML = `
+      <div class="empty-state">
+        <div class="icon">📱</div>
+        <div class="text">暂无角色手机<br>点击右上角 + 添加</div>
+      </div>
+    `;
+        return;
+    }
+
+    container.innerHTML = characters.map(char => {
+        let avatarHtml;
+        const hasAvatar = char.avatar && char.avatar.trim() !== '';
+
+        if (hasAvatar) {
+            avatarHtml = `
+            <img class="avatar" src="${char.avatar}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+            <div class="avatar-placeholder" style="display:none">${char.name.charAt(0)}</div>
+            `;
+        } else {
+            avatarHtml = `<div class="avatar-placeholder">${char.name.charAt(0)}</div>`;
+        }
+
+        return `
+    <div class="character-card" onclick="openCharacterPhone('${char.id}')">
+      ${avatarHtml}
+      <div class="name">${char.name}</div>
+    </div>
+  `;
+    }).join('');
+}
+
+export function addNewCharacter() {
+    let avatar = document.getElementById('new-char-avatar').value.trim();
+    const preview = document.getElementById('new-char-avatar-preview');
+    if (!avatar && preview.src && preview.src.startsWith('data:image')) {
+        avatar = preview.src;
+    }
+
+    const name = document.getElementById('new-char-name').value.trim();
+    const persona = document.getElementById('new-char-persona').value.trim();
+
+    if (!name) {
+        alert('请输入角色名称');
+        return;
+    }
+
+    const newChar = {
+        id: 'char_' + Date.now(),
+        avatar,
+        name,
+        persona,
+        qqChats: [],
+        album: [],
+        memos: []
+    };
+
+    state.characters.push(newChar);
+    saveToLocalStorage();
+    renderCharacterGrid();
+
+    document.getElementById('new-char-avatar').value = '';
+    document.getElementById('new-char-name').value = '';
+    document.getElementById('new-char-persona').value = '';
+    document.getElementById('new-char-avatar-preview').src = '';
+    document.getElementById('add-character-modal').classList.remove('active');
+}
+
+export function openCharacterPhone(charId) {
+    setCurrentCharacterId(charId);
+    showScreen('character-phone-screen');
+    switchToCharHomeScreen();
+}
+
+export function openCharApp(appName) {
+    document.querySelectorAll('.char-screen').forEach(s => s.classList.remove('active'));
+
+    switch (appName) {
+        case 'qq':
+            document.getElementById('char-qq-screen').classList.add('active');
+            renderCharQQ();
+            break;
+        case 'album':
+            document.getElementById('char-album-screen').classList.add('active');
+            renderCharAlbum();
+            break;
+        case 'memo':
+            document.getElementById('char-memo-screen').classList.add('active');
+            renderCharMemo();
+            break;
+        case 'browser':
+            document.getElementById('char-browser-screen').classList.add('active');
+            renderCharBrowser();
+            break;
+        case 'sms':
+            document.getElementById('char-sms-screen').classList.add('active');
+            renderCharSMS();
+            break;
+        case 'x':
+            document.getElementById('char-x-screen').classList.add('active');
+            renderCharX();
+            break;
+    }
+}
+
+// Sub-apps
+export function renderCharQQ() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-chat-list');
+    if (!char) return;
+
+    let chatItems = [];
+
+    // 1. Sync real chat
+    const userChat = state.chats.find(c => c.name === char.name);
+    if (userChat && userChat.messages && userChat.messages.length > 0) {
+        const lastMsg = userChat.messages[userChat.messages.length - 1];
+        chatItems.push({
+            name: state.settings.userName || '用户',
+            avatar: '',
+            preview: lastMsg.content.substring(0, 30),
+            time: userChat.lastTime || '',
+            isReal: true
+        });
+    }
+
+    // 2. AI generated
+    if (char.qqChats && char.qqChats.length > 0) {
+        char.qqChats.forEach(item => {
+            chatItems.push({
+                name: item.name || '未知联系人',
+                avatar: '',
+                preview: item.preview || '',
+                time: item.time || '',
+                isReal: false
+            });
+        });
+    }
+
+    if (chatItems.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">💬</div><div class="text">暂无聊天记录<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = chatItems.map(item => {
+        const initial = item.name.charAt(0);
+        const badgeClass = item.isReal ? ' wechat-badge' : '';
+        return `
+      <div class="wechat-chat-item${badgeClass}">
+        <div class="wechat-avatar">${initial}</div>
+        <div class="wechat-chat-info">
+          <div class="wechat-chat-top">
+            <span class="wechat-chat-name">${item.name}</span>
+            <span class="wechat-chat-time">${item.time}</span>
+          </div>
+          <div class="wechat-chat-preview">${item.preview}</div>
+        </div>
+      </div>
+    `;
+    }).join('');
+}
+
+export async function regenerateCharQQ() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-qq-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。返回JSON数组: [{"name": "联系人", "preview": "最后一条消息", "time": "时间"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            char.qqChats = JSON.parse(result);
+            saveToLocalStorage();
+            renderCharQQ();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+}
+
+export function renderCharAlbum() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-album-grid');
+    if (!char || !char.album || char.album.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🖼️</div><div class="text">暂无照片<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.album.map((img, idx) => `
+    <div class="album-desc-card" onclick="alert('\\ud83d\\udcf7 照片 ${idx + 1}\\n\\n${img.desc.replace(/'/g, "\\'").replace(/"/g, '&quot;')}')">
+      <div class="album-card-icon">📷</div>
+      <div class="album-card-text">${img.desc}</div>
+    </div>
+  `).join('');
+}
+
+export async function regenerateCharAlbum() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-album-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"生成6张相册照片描述。返回JSON数组: [{"desc": "描述"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            const parsed = JSON.parse(result);
+            char.album = parsed.map(item => ({ desc: item.desc }));
+            saveToLocalStorage();
+            renderCharAlbum();
+        } catch (e) { console.error(e); }
+    }
+}
+
+export function renderCharMemo() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-memo-list');
+    if (!char || !char.memos || char.memos.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📝</div><div class="text">暂无备忘录<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.memos.map(memo => `
+    <div class="memo-item">
+      <div class="title">${memo.title || '无标题'}</div>
+      <div class="content">${memo.content || ''}</div>
+    </div>
+  `).join('');
+}
+
+export async function regenerateCharMemo() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-memo-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"生成3-4条备忘录。返回JSON数组: [{"title": "标题", "content": "内容"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            char.memos = JSON.parse(result);
+            saveToLocalStorage();
+            renderCharMemo();
+        } catch (e) { console.error(e); }
+    }
+}
+
+// ========== Browser ==========
+export function renderCharBrowser() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-browser-content');
+    if (!char || !char.browserHistory || char.browserHistory.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">🌐</div><div class="text">暂无浏览记录<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.browserHistory.map(item => `
+        <div class="browser-card">
+            <div class="browser-title">${item.title}</div>
+            <div class="browser-url">${item.url}</div>
+            <div class="browser-desc">${item.desc}</div>
+        </div>
+    `).join('');
+}
+
+export async function regenerateCharBrowser() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-browser-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"（人设：${char.persona}）生成浏览器访问历史和推荐网站（6-8个）。内容应符合角色的性格、兴趣和个人喜好，可以包含各种类型的网站。返回JSON数组: [{"title": "网站标题", "url": "虚构的网址", "desc": "简短描述"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            char.browserHistory = JSON.parse(result);
+            saveToLocalStorage();
+            renderCharBrowser();
+        } catch (e) { console.error(e); }
+    }
+}
+
+// ========== SMS ==========
+export function renderCharSMS() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-sms-list');
+    if (!char || !char.smsChats || char.smsChats.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">✉️</div><div class="text">暂无短信<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.smsChats.map(item => `
+        <div class="sms-item">
+            <div class="sms-icon">${item.name.charAt(0)}</div>
+            <div class="sms-info">
+                <div class="sms-top">
+                    <span class="sms-name">${item.name}</span>
+                    <span class="sms-time">${item.time || ''}</span>
+                </div>
+                <div class="sms-preview">${item.preview}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+export async function regenerateCharSMS() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-sms-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。包含各种发件人（朋友、家人、验证码、广告、快递通知等），符合角色的生活场景。返回JSON数组: [{"name": "发件人", "preview": "短信内容预览", "time": "时间"}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            char.smsChats = JSON.parse(result);
+            saveToLocalStorage();
+            renderCharSMS();
+        } catch (e) { console.error(e); }
+    }
+}
+
+// ========== X (Twitter) ==========
+export function renderCharX() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-x-feed');
+    if (!char || !char.xFeed || char.xFeed.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">𝕏</div><div class="text">暂无推文<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.xFeed.map(tweet => {
+        const avatarEmoji = tweet.avatar_emoji || '👤';
+        const timeText = tweet.minutesAgo
+            ? (tweet.minutesAgo < 60 ? `${tweet.minutesAgo}m` : `${Math.floor(tweet.minutesAgo / 60)}h`)
+            : (tweet.time || '');
+
+        return `
+        <div class="x-tweet">
+            <div class="x-tweet-header">
+                <div class="x-tweet-avatar">${avatarEmoji}</div>
+                <div class="x-tweet-user">
+                    <div class="x-tweet-name">${tweet.username}</div>
+                    <div class="x-tweet-handle">@${tweet.handle} · ${timeText}</div>
+                </div>
+            </div>
+            <div class="x-tweet-content">${tweet.content}</div>
+            <div class="x-tweet-actions">
+                <span>💬 ${tweet.replies || 0}</span>
+                <span>🔁 ${tweet.retweets || 0}</span>
+                <span>❤️ ${tweet.likes || 0}</span>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+export async function regenerateCharX() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-x-btn');
+    btn.textContent = '⏳';
+
+    const prompt = `为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 时间线上关注的博主和推文（6-8条）。
+内容应完全反映角色的个人喜好、性癖和兴趣偏向，风格大胆、大尺度、露骨。
+包含不同类型的博主（擦边内容创作者、小众社区等）。
+每条推文应有不同的博主。
+返回JSON数组: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = '🔄';
+
+    if (result) {
+        try {
+            char.xFeed = JSON.parse(result);
+            saveToLocalStorage();
+            renderCharX();
+        } catch (e) { console.error(e); }
+    }
+}
