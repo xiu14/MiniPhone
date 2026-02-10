@@ -12,22 +12,22 @@ export async function callAI(chat, systemPromptOverride = null) {
     if (matchedChar) {
         const parts = [];
         if (matchedChar.qqChats?.length) {
-            parts.push(`[微信聊天] ${matchedChar.qqChats.map(c => `${c.name}: "${c.preview}"`).join('; ')}`);
+            parts.push(`[微信聊天] ${matchedChar.qqChats.slice(0, 3).map(c => `${c.name}: "${c.preview}"`).join('; ')}`);
         }
         if (matchedChar.albums?.length) {
-            parts.push(`[相册] ${matchedChar.albums.map(a => a.desc || a.title).join('; ')}`);
+            parts.push(`[相册] ${matchedChar.albums.slice(0, 3).map(a => a.desc || a.title).join('; ')}`);
         }
         if (matchedChar.memos?.length) {
-            parts.push(`[备忘录] ${matchedChar.memos.map(m => m.title).join('; ')}`);
+            parts.push(`[备忘录] ${matchedChar.memos.slice(0, 3).map(m => m.title).join('; ')}`);
         }
         if (matchedChar.browserHistory?.length) {
-            parts.push(`[浏览器历史] ${matchedChar.browserHistory.map(b => b.title).join('; ')}`);
+            parts.push(`[浏览器历史] ${matchedChar.browserHistory.slice(0, 3).map(b => b.title).join('; ')}`);
         }
         if (matchedChar.smsChats?.length) {
-            parts.push(`[短信] ${matchedChar.smsChats.map(s => `${s.name}: "${s.preview}"`).join('; ')}`);
+            parts.push(`[短信] ${matchedChar.smsChats.slice(0, 3).map(s => `${s.name}: "${s.preview}"`).join('; ')}`);
         }
         if (matchedChar.xFeed?.length) {
-            parts.push(`[X/Twitter关注] ${matchedChar.xFeed.map(t => `@${t.handle}: "${t.content.substring(0, 50)}"`).join('; ')}`);
+            parts.push(`[X/Twitter关注] ${matchedChar.xFeed.slice(0, 3).map(t => `@${t.handle}: "${t.content.substring(0, 50)}"`).join('; ')}`);
         }
         if (parts.length > 0) {
             cphoneContext = `\n\n以下是你的手机（CPhone）中的数据，这些信息反映了你的真实生活、社交和兴趣。用户可能会提到或询问这些内容，请基于这些数据自然地回应：\n${parts.join('\n')}`;

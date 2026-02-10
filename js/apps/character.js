@@ -200,7 +200,8 @@ export async function regenerateCharQQ() {
     const btn = document.getElementById('regenerate-char-qq-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。返回JSON数组: [{"name": "联系人", "preview": "最后一条消息", "time": "时间"}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。
+只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "联系人", "preview": "最后一条消息", "time": "时间"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
@@ -239,17 +240,20 @@ export async function regenerateCharAlbum() {
     const btn = document.getElementById('regenerate-char-album-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"生成6张相册照片描述。返回JSON数组: [{"desc": "描述"}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"生成6张相册照片描述。
+只返回JSON数组，不要任何 markdown 标记或解释: [{"desc": "照片描述"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
 
     if (result) {
         try {
-            const parsed = JSON.parse(result);
-            char.album = parsed.map(item => ({ desc: item.desc }));
-            saveToLocalStorage();
-            renderCharAlbum();
+            const parsed = safeParseJSON(result);
+            if (parsed) {
+                char.album = parsed.map(item => ({ desc: item.desc }));
+                saveToLocalStorage();
+                renderCharAlbum();
+            }
         } catch (e) { console.error(e); }
     }
 }
@@ -277,7 +281,8 @@ export async function regenerateCharMemo() {
     const btn = document.getElementById('regenerate-char-memo-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"生成3-4条备忘录。返回JSON数组: [{"title": "标题", "content": "内容"}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"生成3-4条备忘录。
+只返回JSON数组，不要任何 markdown 标记或解释: [{"title": "标题", "content": "内容"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
@@ -316,7 +321,8 @@ export async function regenerateCharBrowser() {
     const btn = document.getElementById('regenerate-char-browser-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"（人设：${char.persona}）生成浏览器访问历史和推荐网站（6-8个）。内容应符合角色的性格、兴趣和个人喜好，可以包含各种类型的网站。返回JSON数组: [{"title": "网站标题", "url": "虚构的网址", "desc": "简短描述"}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成浏览器访问历史和推荐网站（6-8个）。
+只返回JSON数组，不要任何 markdown 标记或解释: [{"title": "网站标题", "url": "虚构的网址", "desc": "简短描述"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
@@ -360,7 +366,8 @@ export async function regenerateCharSMS() {
     const btn = document.getElementById('regenerate-char-sms-btn');
     btn.textContent = '⏳';
 
-    const prompt = `为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。包含各种发件人（朋友、家人、验证码、广告、快递通知等），符合角色的生活场景。返回JSON数组: [{"name": "发件人", "preview": "短信内容预览", "time": "时间"}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。
+只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "发件人", "preview": "短信内容预览", "time": "时间"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';

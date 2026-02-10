@@ -19,7 +19,7 @@ import {
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX
-} from './apps/character.js?v=5';
+} from './apps/character.js?v=6';
 
 // ========== Initialization ========== //
 async function initApp() {
