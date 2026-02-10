@@ -4,11 +4,12 @@
 #phone-screen {
     width: 100%;
     max-width: 430px;
-    height: 100vh;
-    height: 100dvh;
-    max-height: 932px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: var(--bg-primary);
-    position: relative;
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -16,10 +17,16 @@
 
 @media (min-width: 500px) {
     #phone-screen {
-        border-radius: 40px;
-        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
+        position: relative;
+        top: auto;
+        left: auto;
+        right: auto;
+        bottom: auto;
         height: 90vh;
         height: 90dvh;
+        max-height: 932px;
+        border-radius: 40px;
+        box-shadow: 0 0 60px rgba(0, 0, 0, 0.5);
     }
 }
 
