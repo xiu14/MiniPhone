@@ -1,16 +1,16 @@
 /* MiniPhone Service Worker - Cache-first for static assets */
-const CACHE_NAME = 'miniphone-v22';
+const CACHE_NAME = 'miniphone-v23';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
     './manifest.json',
-    './css/main.css',
-    './css/base.css',
-    './css/layout.css',
-    './css/components.css',
-    './css/apps/chat.css',
-    './css/apps/character.css',
-    './css/apps/moments.css',
+    './css/main.css?v=22',
+    './css/base.css?v=22',
+    './css/layout.css?v=22',
+    './css/components.css?v=22',
+    './css/apps/chat.css?v=22',
+    './css/apps/character.css?v=22',
+    './css/apps/moments.css?v=22',
     './js/main.js',
     './js/core/db.js',
     './js/core/storage.js',
