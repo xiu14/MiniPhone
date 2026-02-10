@@ -108,7 +108,7 @@ export async function generateCharContent(prompt) {
                 model: settings.model,
                 messages: [{ role: 'user', content: prompt }],
                 temperature: 0.9,
-                max_tokens: 1000
+                max_tokens: 2500
             })
         });
 

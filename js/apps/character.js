@@ -11,11 +11,11 @@ function safeParseJSON(text) {
     // Replace newlines with spaces
     text = text.replace(/\r?\n/g, ' ');
     // Try direct parse
-    try { return JSON.parse(text); } catch {}
+    try { return JSON.parse(text); } catch { }
     // Try to extract [...] array
     const m = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
     if (m) {
-        try { return JSON.parse(m[0]); } catch {}
+        try { return JSON.parse(m[0]); } catch { }
     }
     console.warn('safeParseJSON failed:', text.substring(0, 100));
     return null;
@@ -416,7 +416,7 @@ export async function regenerateCharX() {
     const btn = document.getElementById('regenerate-char-x-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（6-8条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（4-6条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
 
 只返回JSON数组，不要任何解释文字: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
 
