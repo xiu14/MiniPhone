@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=29">
+    <link rel="stylesheet" href="css/main.css?v=31">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -124,7 +124,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=29');
+            await import('./js/main.js?v=31');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -230,7 +230,8 @@
                     <span class="label">API设置</span>
                 </div>
                 <div class="desktop-app-icon"
-                    onclick="console.log('Opening World Book'); if(window.openGlobalPromptSettings) window.openGlobalPromptSettings(); else alert('Feature not ready')">
+                    ontouchstart="if(window.openGlobalPromptSettings) window.openGlobalPromptSettings()"
+                    onclick="if(window.openGlobalPromptSettings) window.openGlobalPromptSettings()">
                     <div class="icon-bg-desktop">📖</div>
                     <span class="label">世界书</span>
                 </div>
@@ -697,7 +698,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v29 (Secret Calc)</span>
+                        <span style="color:#888;">v31 (Secret Calc)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新
@@ -711,7 +712,7 @@
 
     </div>
     <!-- Global System Prompt Settings Modal -->
-    <div id="global-prompt-modal" class="modal-overlay">
+    <div id="global-prompt-modal" class="modal">
         <div class="modal-content">
             <h3 class="modal-title">世界书设定</h3>
             <div class="form-group">
