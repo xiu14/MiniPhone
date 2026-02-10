@@ -34,10 +34,29 @@ export async function callAI(chat, systemPromptOverride = null) {
         }
     }
 
+    // Build sticker info for AI
+    let stickerInfo = '';
+    if (state.stickerPacks && state.stickerPacks.length > 0) {
+        const allStickers = state.stickerPacks.flatMap(pack =>
+            pack.stickers.map(s => `[sticker:${s.url}] (${s.name})`)
+        );
+        if (allStickers.length > 0) {
+            stickerInfo = `\n\n你可以在回复中使用以下表情包（直接使用对应的标签即可）：\n${allStickers.slice(0, 20).join('\n')}`;
+        }
+    }
+
     const systemPrompt = systemPromptOverride || `你现在扮演 "${chat.name}"。${chat.persona || ''}
 用户的名字是 "${settings.userName}"。
 用户的简介: ${settings.userBio || '无'}
-请保持角色扮演，使用自然、口语化的方式回复。回复要简短精炼。${cphoneContext}`;
+请保持角色扮演，使用自然、口语化的方式回复。回复要简短精炼。${cphoneContext}
+
+【转账功能】
+你可以在回复中发起转账，格式为：[transfer:{"amount":"金额","note":"备注","status":"pending","id":"tf_时间戳"}]
+例如向用户转账50元作为生日红包：[transfer:{"amount":"50.00","note":"生日快乐！","status":"pending","id":"tf_${Date.now()}"}]
+注意事项：
+- 转账消息必须单独一条，不要和其他文字混在一起
+- 只在剧情需要时发起转账，不要频繁使用
+- 金额要符合剧情背景，合理自然${stickerInfo}`;
 
     const messages = [
         { role: 'system', content: systemPrompt },
@@ -58,6 +77,18 @@ export async function callAI(chat, systemPromptOverride = null) {
                     }
                 }
                 return `[发送了表情: ${name}]`;
+            });
+
+            // Replace [transfer:json] with readable text for AI
+            content = content.replace(/\[transfer:(.*?)\]/g, (match, jsonStr) => {
+                try {
+                    const d = JSON.parse(jsonStr);
+                    const who = msg.role === 'user' ? '用户' : chat.name;
+                    const statusText = d.status === 'received' ? '（已收款）' : d.status === 'returned' ? '（已退回）' : '';
+                    return `[${who}发起了转账 ¥${d.amount}${d.note ? '，备注：' + d.note : ''}${statusText}]`;
+                } catch (e) {
+                    return '[转账消息]';
+                }
             });
 
             return { role: msg.role, content };

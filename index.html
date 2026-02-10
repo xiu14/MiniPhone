@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=24">
+    <link rel="stylesheet" href="css/main.css?v=25">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -124,7 +124,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=24');
+            await import('./js/main.js?v=25');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -254,10 +254,18 @@
 
         <!-- ========== 聊天界面 ========== -->
         <div id="chat-interface-screen" class="screen">
-            <div class="header">
+            <div class="header" style="position:relative;">
                 <span class="back-btn" id="back-to-list-btn">‹</span>
                 <span id="chat-header-title">聊天对象</span>
-                <span class="action-btn" id="chat-settings-btn">⋯</span>
+                <span class="action-btn" id="chat-menu-btn">⋯</span>
+                <div class="chat-dropdown-menu" id="chat-dropdown-menu">
+                    <div class="chat-dropdown-item" id="menu-chat-settings">
+                        <span class="icon">👤</span><span>角色信息</span>
+                    </div>
+                    <div class="chat-dropdown-item" id="menu-transfer">
+                        <span class="icon">💰</span><span>转账</span>
+                    </div>
+                </div>
             </div>
             <div id="chat-messages"></div>
             <div id="typing-indicator">对方正在输入...</div>
@@ -349,6 +357,34 @@
                         style="background:#ff9800;color:white;margin-right:10px;">清除数据</button>
                     <button class="delete" id="delete-chat-btn">删除</button>
                     <button class="save" id="save-chat-settings-btn">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 转账弹窗 ========== -->
+        <div id="transfer-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header"><span>转账</span></div>
+                <div class="modal-body">
+                    <input type="number" id="transfer-amount" placeholder="¥ 金额" step="0.01" min="0.01">
+                    <input type="text" id="transfer-note" placeholder="添加转账说明...">
+                </div>
+                <div class="modal-footer">
+                    <button class="cancel" id="cancel-transfer-btn">取消</button>
+                    <button class="save" id="confirm-transfer-btn"
+                        style="background:linear-gradient(135deg,#f0a03c,#e08c2a);border:none;">转账</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== 转账操作弹窗 ========== -->
+        <div class="transfer-action-overlay" id="transfer-action-overlay">
+            <div class="transfer-action-sheet">
+                <div class="transfer-action-info">
+                    <div class="amount" id="action-transfer-amount">¥0.00</div>
+                    <div class="note" id="action-transfer-note"></div>
+                </div>
+                <div class="transfer-action-btns" id="transfer-action-btns">
                 </div>
             </div>
         </div>
@@ -646,7 +682,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v24 (Secret Calc)</span>
+                        <span style="color:#888;">v25 (Secret Calc)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

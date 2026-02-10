@@ -3,12 +3,13 @@ console.log('Main.js loading...');
 import { loadFromLocalStorage } from './core/storage.js';
 import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
 import { handleAvatarUpload } from './core/utils.js';
-import { initSettings } from './apps/settings.js?v=24';
+import { initSettings } from './apps/settings.js?v=25';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
     initEmojiPanel, toggleEmojiPanel, insertEmoji,
-    generateSummary, openSummaryApp, openSummaryDetail
+    generateSummary, openSummaryApp, openSummaryDetail,
+    toggleChatMenu, openTransferModal, sendTransfer
 } from './apps/chat.js';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
@@ -20,7 +21,7 @@ import {
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js?v=24';
+} from './apps/character.js?v=25';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -79,6 +80,11 @@ window.insertEmoji = insertEmoji;
 // Summaries
 window.openSummaryApp = openSummaryApp;
 window.openSummaryDetail = openSummaryDetail;
+
+// Transfer
+window.toggleChatMenu = toggleChatMenu;
+window.openTransferModal = openTransferModal;
+window.sendTransfer = sendTransfer;
 
 // Character
 window.openCharacterSelector = openCharacterSelector;
@@ -181,8 +187,17 @@ function bindGlobalListeners() {
         }
     });
 
-    // Chat Settings
-    document.getElementById('chat-settings-btn').addEventListener('click', openChatSettings);
+    // Chat Settings (via dropdown menu)
+    document.getElementById('chat-menu-btn').addEventListener('click', toggleChatMenu);
+    document.getElementById('menu-chat-settings').addEventListener('click', () => {
+        document.getElementById('chat-dropdown-menu').classList.remove('active');
+        openChatSettings();
+    });
+    document.getElementById('menu-transfer').addEventListener('click', openTransferModal);
+    document.getElementById('cancel-transfer-btn').addEventListener('click', () => {
+        document.getElementById('transfer-modal').classList.remove('active');
+    });
+    document.getElementById('confirm-transfer-btn').addEventListener('click', sendTransfer);
     document.getElementById('cancel-chat-settings-btn').addEventListener('click', () => {
         document.getElementById('chat-settings-modal').classList.remove('active');
     });

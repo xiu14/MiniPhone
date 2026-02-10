@@ -438,3 +438,247 @@
 #emoji-btn:hover {
     background-color: var(--bg-tertiary);
 }
+
+/* ========== 聊天下拉菜单 ========== */
+.chat-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 50px;
+    right: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 6px 0;
+    min-width: 140px;
+    z-index: 200;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.chat-dropdown-menu.active {
+    display: block;
+}
+
+.chat-dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 18px;
+    font-size: 15px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.chat-dropdown-item:hover {
+    background: var(--bg-tertiary);
+}
+
+.chat-dropdown-item .icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+}
+
+/* ========== 转账卡片 ========== */
+.transfer-card {
+    width: 240px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.15s;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.transfer-card:active {
+    transform: scale(0.97);
+}
+
+.transfer-card-body {
+    background: linear-gradient(135deg, #f0a03c, #e08c2a);
+    padding: 16px;
+    color: #fff;
+}
+
+.transfer-card-title {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 10px;
+}
+
+.transfer-card-amount {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 6px;
+}
+
+.transfer-card-note {
+    font-size: 12px;
+    opacity: 0.8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.transfer-card-footer {
+    background: rgba(0, 0, 0, 0.08);
+    padding: 8px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+}
+
+.transfer-card-footer .label {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.transfer-card-footer .status {
+    color: #fff;
+    font-weight: 500;
+}
+
+/* 已收款 */
+.transfer-card.received .transfer-card-body {
+    background: linear-gradient(135deg, #f0a03c88, #e08c2a88);
+}
+
+/* 已退回 */
+.transfer-card.returned .transfer-card-body {
+    background: linear-gradient(135deg, #88888888, #66666688);
+}
+
+.transfer-card.received .transfer-card-footer,
+.transfer-card.returned .transfer-card-footer {
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* ========== 转账弹窗 ========== */
+#transfer-modal .modal-body {
+    padding: 20px;
+}
+
+#transfer-amount {
+    font-size: 32px;
+    font-weight: 600;
+    text-align: center;
+    width: 100%;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 10px;
+    color: var(--text-primary);
+    outline: none;
+    margin-bottom: 12px;
+}
+
+#transfer-amount::placeholder {
+    color: var(--text-secondary);
+    font-size: 18px;
+    font-weight: 400;
+}
+
+#transfer-note {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: none;
+    border-radius: 10px;
+    color: var(--text-primary);
+    font-size: 14px;
+    outline: none;
+}
+
+#transfer-note::placeholder {
+    color: var(--text-secondary);
+}
+
+/* ========== 转账操作弹窗 ========== */
+.transfer-action-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 500;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+.transfer-action-overlay.active {
+    display: flex;
+}
+
+.transfer-action-sheet {
+    background: var(--bg-secondary);
+    border-radius: 14px 14px 0 0;
+    width: 100%;
+    max-width: 430px;
+    padding: 20px;
+    animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.transfer-action-info {
+    text-align: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 16px;
+}
+
+.transfer-action-info .amount {
+    font-size: 32px;
+    font-weight: 600;
+    color: #f0a03c;
+    margin-bottom: 4px;
+}
+
+.transfer-action-info .note {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.transfer-action-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.transfer-action-btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.transfer-action-btn:active {
+    opacity: 0.7;
+}
+
+.transfer-action-btn.receive {
+    background: linear-gradient(135deg, #f0a03c, #e08c2a);
+    color: #fff;
+}
+
+.transfer-action-btn.return-btn {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.transfer-action-btn.cancel {
+    background: transparent;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}

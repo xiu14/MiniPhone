@@ -127,19 +127,46 @@ export function renderChatMessages(chat) {
         return;
     }
 
-    container.innerHTML = chat.messages.map(msg => {
+    container.innerHTML = chat.messages.map((msg, msgIndex) => {
         const isUser = msg.role === 'user';
 
         let contentHtml = msg.content;
 
-        // Basic HTML escape first to prevent XSS
-        contentHtml = contentHtml.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        // Check if message is a transfer card
+        const transferMatch = msg.content.match(/^\[transfer:(.*?)\]$/);
+        let isTransfer = false;
+        if (transferMatch) {
+            isTransfer = true;
+            try {
+                const data = JSON.parse(transferMatch[1]);
+                const statusText = data.status === 'received' ? '已收款' : data.status === 'returned' ? '已退回' : '待收款';
+                const statusClass = data.status || 'pending';
+                contentHtml = `<div class="transfer-card ${statusClass}" onclick="showTransferActionSheet(${msgIndex})">
+                    <div class="transfer-card-body">
+                        <div class="transfer-card-title">微信转账</div>
+                        <div class="transfer-card-amount">¥${parseFloat(data.amount).toFixed(2)}</div>
+                        ${data.note ? `<div class="transfer-card-note">${data.note}</div>` : ''}
+                    </div>
+                    <div class="transfer-card-footer">
+                        <span class="label">微信转账</span>
+                        <span class="status">${statusText}</span>
+                    </div>
+                </div>`;
+            } catch (e) {
+                contentHtml = '[转账消息解析失败]';
+            }
+        }
 
-        // Replace all stickers tags with images (Global match)
-        // Format: [sticker:URL]
-        contentHtml = contentHtml.replace(/\[sticker:(.*?)\]/g, (match, url) => {
-            return `<img src="${url}" class="chat-sticker-img" onclick="window.open(this.src, '_blank')">`;
-        });
+        if (!isTransfer) {
+            // Basic HTML escape first to prevent XSS
+            contentHtml = contentHtml.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+            // Replace all stickers tags with images (Global match)
+            // Format: [sticker:URL]
+            contentHtml = contentHtml.replace(/\[sticker:(.*?)\]/g, (match, url) => {
+                return `<img src="${url}" class="chat-sticker-img" onclick="window.open(this.src, '_blank')">`;
+            });
+        }
 
         let avatarHtml;
         if (!isUser && chat.avatar && chat.avatar.trim() !== '') {
@@ -155,11 +182,10 @@ export function renderChatMessages(chat) {
         }
 
         // Detect if message is ONLY a sticker (for bubble styling)
-        // If content is exactly [sticker:...] and nothing else
         const isSingleSticker = /^\[sticker:.*?\]$/.test(msg.content.trim());
 
-        const bubbleClass = isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received'));
-        const bubbleStyle = isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '';
+        const bubbleClass = isTransfer ? '' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
+        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         return `
     <div class="message-row ${isUser ? 'sent' : 'received'}">
@@ -605,3 +631,127 @@ export function toggleEmojiPanel() {
 export function insertEmoji(emoji) {
     // ...
 }
+
+// ========== Transfer (转账) ==========
+
+export function toggleChatMenu() {
+    const menu = document.getElementById('chat-dropdown-menu');
+    menu.classList.toggle('active');
+}
+
+// Close menu when clicking outside
+document.addEventListener('click', (e) => {
+    const menu = document.getElementById('chat-dropdown-menu');
+    const btn = document.getElementById('chat-menu-btn');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+        menu.classList.remove('active');
+    }
+});
+
+export function openTransferModal() {
+    document.getElementById('chat-dropdown-menu').classList.remove('active');
+    document.getElementById('transfer-amount').value = '';
+    document.getElementById('transfer-note').value = '';
+    document.getElementById('transfer-modal').classList.add('active');
+}
+
+export function sendTransfer() {
+    const amountStr = document.getElementById('transfer-amount').value.trim();
+    const note = document.getElementById('transfer-note').value.trim();
+    const amount = parseFloat(amountStr);
+
+    if (!amount || amount <= 0) {
+        alert('请输入有效金额');
+        return;
+    }
+
+    const chat = getCurrentChat();
+    if (!chat) return;
+
+    const transferData = {
+        amount: amount.toFixed(2),
+        note: note || '',
+        status: 'pending',
+        id: 'tf_' + Date.now()
+    };
+
+    const content = `[transfer:${JSON.stringify(transferData)}]`;
+
+    if (!chat.messages) chat.messages = [];
+    chat.messages.push({ role: 'user', content });
+    chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+    renderChatMessages(chat);
+    saveToLocalStorage();
+
+    // Close modal
+    document.getElementById('transfer-modal').classList.remove('active');
+
+    // Do NOT trigger AI reply — user must press ✋ button
+}
+
+window.showTransferActionSheet = function (msgIndex) {
+    const chat = getCurrentChat();
+    if (!chat || !chat.messages[msgIndex]) return;
+
+    const msg = chat.messages[msgIndex];
+    const match = msg.content.match(/^\[transfer:(.*?)\]$/);
+    if (!match) return;
+
+    try {
+        const data = JSON.parse(match[1]);
+        const isFromOther = msg.role === 'assistant';
+        const isFromUser = msg.role === 'user';
+
+        document.getElementById('action-transfer-amount').textContent = `¥${parseFloat(data.amount).toFixed(2)}`;
+        document.getElementById('action-transfer-note').textContent = data.note || '转账';
+
+        const btnsContainer = document.getElementById('transfer-action-btns');
+        let btnsHtml = '';
+
+        if (data.status === 'pending') {
+            if (isFromOther) {
+                // AI 给用户转账：用户可以收款或退回
+                btnsHtml = `
+                    <button class="transfer-action-btn receive" onclick="handleTransferAction(${msgIndex}, 'received')">确认收款</button>
+                    <button class="transfer-action-btn return-btn" onclick="handleTransferAction(${msgIndex}, 'returned')">退还给对方</button>
+                `;
+            } else {
+                // 用户给 AI 转账：用户可以退回（撤回）
+                btnsHtml = `
+                    <button class="transfer-action-btn return-btn" onclick="handleTransferAction(${msgIndex}, 'returned')">撤回转账</button>
+                `;
+            }
+        } else {
+            btnsHtml = `<div style="text-align:center;color:var(--text-secondary);padding:10px;">${data.status === 'received' ? '已收款' : '已退回'}</div>`;
+        }
+
+        btnsHtml += `<button class="transfer-action-btn cancel" onclick="document.getElementById('transfer-action-overlay').classList.remove('active')">取消</button>`;
+        btnsContainer.innerHTML = btnsHtml;
+
+        document.getElementById('transfer-action-overlay').classList.add('active');
+    } catch (e) {
+        console.error('Transfer action error:', e);
+    }
+};
+
+window.handleTransferAction = function (msgIndex, action) {
+    const chat = getCurrentChat();
+    if (!chat || !chat.messages[msgIndex]) return;
+
+    const msg = chat.messages[msgIndex];
+    const match = msg.content.match(/^\[transfer:(.*?)\]$/);
+    if (!match) return;
+
+    try {
+        const data = JSON.parse(match[1]);
+        data.status = action;
+        msg.content = `[transfer:${JSON.stringify(data)}]`;
+
+        saveToLocalStorage();
+        renderChatMessages(chat);
+        document.getElementById('transfer-action-overlay').classList.remove('active');
+    } catch (e) {
+        console.error('Transfer update error:', e);
+    }
+};
