@@ -33,6 +33,32 @@ export function initSettings() {
         avatarPrev.src = settings.userAvatar;
         avatarPrev.style.display = 'block';
     }
+
+
+    // Bind Global Prompt Events
+    const saveGlobalBtn = document.getElementById('save-global-prompt-btn');
+    if (saveGlobalBtn) {
+        saveGlobalBtn.addEventListener('click', () => {
+            state.settings.globalSystemPrompt = document.getElementById('global-system-prompt').value.trim();
+            saveToLocalStorage();
+            document.getElementById('global-prompt-modal').classList.remove('active');
+            alert('世界书设定已更新');
+        });
+    }
+
+    const cancelGlobalBtn = document.getElementById('cancel-global-prompt-btn');
+    if (cancelGlobalBtn) {
+        cancelGlobalBtn.addEventListener('click', () => {
+            document.getElementById('global-prompt-modal').classList.remove('active');
+        });
+    }
+
+    const resetGlobalBtn = document.getElementById('reset-global-prompt-btn');
+    if (resetGlobalBtn) {
+        resetGlobalBtn.addEventListener('click', () => {
+            document.getElementById('global-system-prompt').value = DEFAULT_WECHAT_PROMPT;
+        });
+    }
 }
 
 export function saveApiSettings() {
@@ -124,18 +150,4 @@ export function openGlobalPromptSettings() {
     document.getElementById('global-prompt-modal').classList.add('active');
 }
 
-// Bind Global Prompt Events
-document.getElementById('save-global-prompt-btn').addEventListener('click', () => {
-    state.settings.globalSystemPrompt = document.getElementById('global-system-prompt').value.trim();
-    saveToLocalStorage();
-    document.getElementById('global-prompt-modal').classList.remove('active');
-    alert('系统提示词已更新');
-});
 
-document.getElementById('cancel-global-prompt-btn').addEventListener('click', () => {
-    document.getElementById('global-prompt-modal').classList.remove('active');
-});
-
-document.getElementById('reset-global-prompt-btn').addEventListener('click', () => {
-    document.getElementById('global-system-prompt').value = DEFAULT_WECHAT_PROMPT;
-});

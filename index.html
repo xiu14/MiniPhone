@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=28">
+    <link rel="stylesheet" href="css/main.css?v=29">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -124,7 +124,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=28');
+            await import('./js/main.js?v=29');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -229,9 +229,10 @@
                     <div class="icon-bg-desktop">⚙️</div>
                     <span class="label">API设置</span>
                 </div>
-                <div class="desktop-app-icon" onclick="openGlobalPromptSettings()">
-                    <div class="icon-bg-desktop">📝</div>
-                    <span class="label">系统设定</span>
+                <div class="desktop-app-icon"
+                    onclick="console.log('Opening World Book'); if(window.openGlobalPromptSettings) window.openGlobalPromptSettings(); else alert('Feature not ready')">
+                    <div class="icon-bg-desktop">📖</div>
+                    <span class="label">世界书</span>
                 </div>
             </div>
         </div>
@@ -696,7 +697,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v28 (Secret Calc)</span>
+                        <span style="color:#888;">v29 (Secret Calc)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新
@@ -712,11 +713,11 @@
     <!-- Global System Prompt Settings Modal -->
     <div id="global-prompt-modal" class="modal-overlay">
         <div class="modal-content">
-            <h3 class="modal-title">系统提示词设定</h3>
+            <h3 class="modal-title">世界书设定</h3>
             <div class="form-group">
-                <label>全局系统提示词 (System Prompt)</label>
-                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">此提示词将应用于所有角色，用于控制 AI
-                    的回复风格（如强制短回复、微信风格等）。</div>
+                <label>世界书 (World Book)</label>
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">世界书内容将应用于所有角色，用于设定世界观或 AI
+                    回复风格（如强制短回复、微信风格等）。</div>
                 <textarea id="global-system-prompt" class="form-input" rows="8"
                     placeholder="例如：请完全模拟微信聊天风格，回复简短..."></textarea>
             </div>
