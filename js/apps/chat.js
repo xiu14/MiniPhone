@@ -599,26 +599,45 @@ export function sendSticker(url) {
 
 // Extract AI reply logic to reuse
 async function triggerAIReply(chat) {
-    document.getElementById('typing-indicator').style.display = 'block';
-
-    // We need to handle sticker in prompt. Maybe convert to [图片] for AI?
-    // The callAI function uses chat.messages. 
-    // We should probably strip [sticker:url] for AI or replace it.
-
-    // For now, let's just let it pass. AI might be confused by URL but that's okay.
-    // Or we temporarily replace for the API call.
+    const typingIndicator = document.getElementById('typing-indicator');
+    typingIndicator.style.display = 'block';
 
     try {
-        const response = await callAI(chat);
-        chat.messages.push({ role: 'assistant', content: response });
-        saveToLocalStorage();
+        const responseText = await callAI(chat);
+        const parts = responseText.split('|||');
+
+        // Initial part is ready, hide initial loading
+        typingIndicator.style.display = 'none';
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i].trim();
+            if (!part) continue;
+
+            // For subsequent messages, simulate typing delay
+            if (i > 0) {
+                typingIndicator.style.display = 'block';
+                // Delay based on content length + random jitter (min 1s, max 3s)
+                const delay = 1000 + Math.random() * 1500;
+                await new Promise(r => setTimeout(r, delay));
+                typingIndicator.style.display = 'none';
+            }
+
+            // Check if chat is still valid/current (simplified check)
+            // In a real app we might check if user switched chats, but here we just push.
+            chat.messages.push({ role: 'assistant', content: part });
+            saveToLocalStorage();
+            renderChatMessages(chat);
+
+            // Ensure scroll to bottom
+            const container = document.getElementById('chat-messages');
+            if (container) container.scrollTop = container.scrollHeight;
+        }
+
     } catch (e) {
         console.error(e);
-        // chat.messages.push({ role: 'assistant', content: '(API Error)' });
+        typingIndicator.style.display = 'none';
+        // Optional: show error message
     }
-
-    document.getElementById('typing-indicator').style.display = 'none';
-    renderChatMessages(chat);
 
     if (chat.messages.length > 0 && chat.messages.length % 50 === 0) {
         generateSummary(chat);
