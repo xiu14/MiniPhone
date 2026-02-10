@@ -49,11 +49,18 @@ export async function loadFromLocalStorage() {
         const hasLegacyData = localStorage.getItem('miniphone_chats') !== null
             || localStorage.getItem('miniphone_settings') !== null;
 
-        if (hasLegacyData) {
-            console.log('🔄 检测到 localStorage 旧数据，正在迁移到 IndexedDB...');
+        // Only migrate if DB appears empty to prevent overwriting valid DB data
+        const dbChatCount = await db.chats.count();
+        if (hasLegacyData && dbChatCount === 0) {
+            console.log('🔄 检测到 localStorage 旧数据且 DB 为空，正在迁移...');
             await migrateFromLocalStorage();
             console.log('✅ 数据迁移完成！');
             return;
+        } else if (hasLegacyData) {
+            console.warn('⚠️ 检测到 localStorage 旧数据但 DB 已有数据，跳过迁移以保护现有数据。');
+            // Optional: Clean up legacy data to stop checking? 
+            // Better to leave it or clean it up if we are sure?
+            // Let's rely on manual cleanup or just ignore it.
         }
 
         // Normal load from IndexedDB
