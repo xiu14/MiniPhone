@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=36">
+    <link rel="stylesheet" href="css/main.css?v=37">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -124,7 +124,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=36');
+            await import('./js/main.js?v=37');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -702,6 +702,8 @@
                     <button class="form-button" id="import-data-btn"
                         style="background:var(--bg-tertiary);margin-top:8px;">⬆️ 导入全量备份</button>
                     <input type="file" id="import-file" style="display:none" accept=".json">
+                    <button class="form-button" onclick="window.diagnoseData()"
+                        style="background:#4a148c;margin-top:10px;font-size:12px;">🛠️ 数据诊断 (遇到问题点我)</button>
                 </div>
 
                 <hr style="margin: 30px 0;">
@@ -711,7 +713,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v36 (Secret Calc)</span>
+                        <span style="color:#888;">v37 (Secret Calc)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

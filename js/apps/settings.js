@@ -226,4 +226,29 @@ function importData(file) {
     reader.readAsText(file);
 }
 
+// Export for debug
+window.diagnoseData = async () => {
+    try {
+        const dbChats = await db.chats.count();
+        const dbChars = await db.characters.count();
+        const dbSettings = await db.settings.get('main');
+        const legacyChats = localStorage.getItem('miniphone_chats') ? 'YES' : 'NO';
+        const legacySettings = localStorage.getItem('miniphone_settings') ? 'YES' : 'NO';
+
+        const info = `【数据诊断报告】\n` +
+            `DB 聊天记录: ${dbChats}\n` +
+            `DB 角色卡片: ${dbChars}\n` +
+            `内存 聊天记录: ${state.chats.length}\n` +
+            `LocalStorage 残留: Chat=${legacyChats}, Set=${legacySettings}\n` +
+            `DB 设置: ${dbSettings ? 'OK' : 'MISSING'}\n\n` +
+            `如果是 0 但你刚导入过，说明保存后被清空了。\n` +
+            `如果是 有数值 但界面没显示，说明加载过程出错。`;
+
+        alert(info);
+        console.log(state);
+    } catch (e) {
+        alert('诊断出错: ' + e.message);
+    }
+};
+
 
