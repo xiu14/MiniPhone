@@ -3,6 +3,25 @@ import { state, saveToLocalStorage, getCurrentCharacter, setCurrentCharacterId }
 import { showScreen, switchToCharHomeScreen } from '../core/router.js';
 import { generateCharContent } from '../services/api.js';
 
+// Safe JSON parser - extracts JSON array from AI text
+function safeParseJSON(text) {
+    if (!text) return null;
+    // Remove markdown code blocks
+    text = text.replace(/^```(?:json|JSON)?\s*\n?/m, '').replace(/\n?```\s*$/m, '').trim();
+    // Replace newlines with spaces
+    text = text.replace(/\r?\n/g, ' ');
+    // Try direct parse
+    try { return JSON.parse(text); } catch {}
+    // Try to extract [...] array
+    const m = text.match(/\[\s*\{[\s\S]*\}\s*\]/);
+    if (m) {
+        try { return JSON.parse(m[0]); } catch {}
+    }
+    console.warn('safeParseJSON failed:', text.substring(0, 100));
+    return null;
+}
+
+
 export function openCharacterSelector() {
     renderCharacterGrid();
     showScreen('character-selection-screen');
@@ -188,7 +207,7 @@ export async function regenerateCharQQ() {
 
     if (result) {
         try {
-            char.qqChats = JSON.parse(result);
+            char.qqChats = safeParseJSON(result); if (!char.qqChats) return;
             saveToLocalStorage();
             renderCharQQ();
         } catch (e) {
@@ -265,7 +284,7 @@ export async function regenerateCharMemo() {
 
     if (result) {
         try {
-            char.memos = JSON.parse(result);
+            char.memos = safeParseJSON(result); if (!char.memos) return;
             saveToLocalStorage();
             renderCharMemo();
         } catch (e) { console.error(e); }
@@ -304,7 +323,7 @@ export async function regenerateCharBrowser() {
 
     if (result) {
         try {
-            char.browserHistory = JSON.parse(result);
+            char.browserHistory = safeParseJSON(result); if (!char.browserHistory) return;
             saveToLocalStorage();
             renderCharBrowser();
         } catch (e) { console.error(e); }
@@ -348,7 +367,7 @@ export async function regenerateCharSMS() {
 
     if (result) {
         try {
-            char.smsChats = JSON.parse(result);
+            char.smsChats = safeParseJSON(result); if (!char.smsChats) return;
             saveToLocalStorage();
             renderCharSMS();
         } catch (e) { console.error(e); }
@@ -397,15 +416,17 @@ export async function regenerateCharX() {
     const btn = document.getElementById('regenerate-char-x-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（6-8条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
-只返回JSON数组，不要任何解释文字: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（6-8条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
+
+只返回JSON数组，不要任何解释文字: [{"username": "显示名", "handle": "用户名", "avatar_emoji": "表情", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
+
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
 
     if (result) {
         try {
-            char.xFeed = JSON.parse(result);
+            char.xFeed = safeParseJSON(result); if (!char.xFeed) return;
             saveToLocalStorage();
             renderCharX();
         } catch (e) { console.error(e); }
