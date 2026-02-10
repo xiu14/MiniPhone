@@ -129,6 +129,15 @@ export async function generateCharContent(prompt) {
                 return null;
             }
         }
+        // Fix unescaped newlines that break JSON strings
+        content = content.replace(/\r?\n/g, ' ');
+        // Final validation
+        try {
+            JSON.parse(content);
+        } catch (e2) {
+            console.warn('JSON sanitization failed:', e2.message, content.substring(0, 100));
+            return null;
+        }
         return content;
     } catch (e) {
         alert('生成失败: ' + e.message);
