@@ -1,5 +1,6 @@
 /* Apps: Settings */
 import { state, saveToLocalStorage } from '../core/storage.js';
+import { db } from '../core/db.js';
 import { fetchModels } from '../services/api.js';
 import { handleAvatarUpload } from '../core/utils.js';
 
@@ -205,11 +206,21 @@ function importData(file) {
             if (data.settings) state.settings = data.settings;
 
             await saveToLocalStorage();
-            alert(`数据恢复成功！\n- 聊天记录: ${state.chats?.length || 0} 条\n- 角色卡片: ${state.characters?.length || 0} 张\n- 朋友圈: ${state.moments?.length || 0} 条\n\n点击确定后页面将自动刷新...`);
+
+            // Strict Verification
+            const verifyChats = await db.chats.count();
+            const verifyChars = await db.characters.count();
+            const verifySettings = await db.settings.get('main');
+
+            if (state.chats.length > 0 && verifyChats === 0) {
+                throw new Error('数据库写入失败: 聊天记录未保存到 DB');
+            }
+
+            alert(`数据恢复成功！ (验证通过)\n- 聊天记录: ${verifyChats} 条\n- 角色卡片: ${verifyChars} 张\n- 朋友圈: ${state.moments?.length || 0} 条\n- 设置: ${verifySettings ? '✅' : '❌'}\n\n点击确定后页面将自动刷新...`);
             setTimeout(() => window.location.reload(), 500);
         } catch (err) {
             console.error(err);
-            alert(`导入失败：${err.message || '文件格式错误或数据损坏'}`);
+            alert(`导入严重错误：${err.message || '未知错误'}\n请截图联系开发者`);
         }
     };
     reader.readAsText(file);
