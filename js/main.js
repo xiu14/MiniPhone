@@ -3,7 +3,7 @@ console.log('Main.js loading...');
 import { loadFromLocalStorage } from './core/storage.js';
 import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
 import { handleAvatarUpload } from './core/utils.js';
-import { initSettings } from './apps/settings.js';
+import { initSettings } from './apps/settings.js?v=1';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
