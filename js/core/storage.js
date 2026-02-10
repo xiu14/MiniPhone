@@ -38,6 +38,7 @@ export async function saveToLocalStorage() {
         });
     } catch (e) {
         console.error('保存数据到 IndexedDB 失败:', e);
+        throw e;
     }
 }
 

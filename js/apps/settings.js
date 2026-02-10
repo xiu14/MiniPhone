@@ -205,11 +205,11 @@ function importData(file) {
             if (data.settings) state.settings = data.settings;
 
             await saveToLocalStorage();
-            alert('数据恢复成功！页面即将刷新...');
-            window.location.reload();
+            alert(`数据恢复成功！\n- 聊天记录: ${state.chats?.length || 0} 条\n- 角色卡片: ${state.characters?.length || 0} 张\n- 朋友圈: ${state.moments?.length || 0} 条\n\n点击确定后页面将自动刷新...`);
+            setTimeout(() => window.location.reload(), 500);
         } catch (err) {
             console.error(err);
-            alert('导入失败：文件格式错误或数据损坏');
+            alert(`导入失败：${err.message || '文件格式错误或数据损坏'}`);
         }
     };
     reader.readAsText(file);
