@@ -215,6 +215,9 @@ function bindGlobalListeners() {
     document.getElementById('emoji-btn').addEventListener('click', toggleEmojiPanel);
 
     // Character App Regenerate Buttons
+    document.getElementById('regenerate-char-qq-btn').addEventListener('click', regenerateCharQQ);
+    document.getElementById('regenerate-char-album-btn').addEventListener('click', regenerateCharAlbum);
+    document.getElementById('regenerate-char-memo-btn').addEventListener('click', regenerateCharMemo);
     document.getElementById('regenerate-char-browser-btn').addEventListener('click', regenerateCharBrowser);
     document.getElementById('regenerate-char-sms-btn').addEventListener('click', regenerateCharSMS);
     document.getElementById('regenerate-char-x-btn').addEventListener('click', regenerateCharX);
