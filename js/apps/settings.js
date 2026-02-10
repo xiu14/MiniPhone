@@ -1,5 +1,5 @@
 /* Apps: Settings */
-import { state, saveToLocalStorage } from '../core/storage.js';
+import { state, saveToLocalStorage, clearLegacyStorage } from '../core/storage.js';
 import { db } from '../core/db.js';
 import { fetchModels } from '../services/api.js';
 import { handleAvatarUpload } from '../core/utils.js';
@@ -198,12 +198,13 @@ function importData(file) {
             // Update state safely
             if (data.chats) state.chats = data.chats;
             if (data.characters) state.characters = data.characters;
-            if (data.moments) state.moments = data.moments;
-            // Filter out default pack if present in backup to avoid duplication/issues
+            state.moments = data.moments || [];
+            // Filter out default pack if present in backup
             if (data.stickerPacks) {
                 state.stickerPacks = data.stickerPacks.filter(p => p.id !== 'pack_default');
             }
-            if (data.settings) state.settings = data.settings;
+            // Merge settings instead of replacing to preserve defaults
+            if (data.settings) state.settings = { ...state.settings, ...data.settings };
 
             await saveToLocalStorage();
 
@@ -215,6 +216,9 @@ function importData(file) {
             if (state.chats.length > 0 && verifyChats === 0) {
                 throw new Error('数据库写入失败: 聊天记录未保存到 DB');
             }
+
+            // 清除 localStorage 旧键，防止 reload 后迁移逻辑覆盖刚导入的数据
+            clearLegacyStorage();
 
             alert(`数据恢复成功！ (验证通过)\n- 聊天记录: ${verifyChats} 条\n- 角色卡片: ${verifyChars} 张\n- 朋友圈: ${state.moments?.length || 0} 条\n- 设置: ${verifySettings ? '✅' : '❌'}\n\n点击确定后页面将自动刷新...`);
             setTimeout(() => window.location.reload(), 500);

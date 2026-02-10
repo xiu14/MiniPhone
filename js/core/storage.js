@@ -45,22 +45,33 @@ export async function saveToLocalStorage() {
 // ========== Load from IndexedDB (with localStorage migration) ========== //
 export async function loadFromLocalStorage() {
     try {
-        // Check if old localStorage data exists and needs migration
-        const hasLegacyData = localStorage.getItem('miniphone_chats') !== null
-            || localStorage.getItem('miniphone_settings') !== null;
+        // Check if old localStorage data exists AND has real content
+        const legacyChatsRaw = localStorage.getItem('miniphone_chats');
+        const legacySettingsRaw = localStorage.getItem('miniphone_settings');
+        let hasRealLegacyData = false;
+        try {
+            if (legacyChatsRaw) {
+                const parsed = JSON.parse(legacyChatsRaw);
+                if (Array.isArray(parsed) && parsed.length > 0) hasRealLegacyData = true;
+            }
+            if (!hasRealLegacyData && legacySettingsRaw) {
+                const parsed = JSON.parse(legacySettingsRaw);
+                if (parsed && Object.keys(parsed).length > 0) hasRealLegacyData = true;
+            }
+        } catch (_) { /* ignore parse errors in legacy data */ }
 
-        // Only migrate if DB appears empty to prevent overwriting valid DB data
+        // Only migrate if legacy data has real content AND DB is completely empty
         const dbChatCount = await db.chats.count();
-        if (hasLegacyData && dbChatCount === 0) {
+        const dbCharCount = await db.characters.count();
+        if (hasRealLegacyData && dbChatCount === 0 && dbCharCount === 0) {
             console.log('🔄 检测到 localStorage 旧数据且 DB 为空，正在迁移...');
             await migrateFromLocalStorage();
             console.log('✅ 数据迁移完成！');
             return;
-        } else if (hasLegacyData) {
-            console.warn('⚠️ 检测到 localStorage 旧数据但 DB 已有数据，跳过迁移以保护现有数据。');
-            // Optional: Clean up legacy data to stop checking? 
-            // Better to leave it or clean it up if we are sure?
-            // Let's rely on manual cleanup or just ignore it.
+        } else if (legacyChatsRaw || legacySettingsRaw) {
+            console.warn('⚠️ localStorage 有旧键但不满足迁移条件 (DB已有数据或旧数据为空)，跳过迁移。');
+            // 主动清理无用旧键，防止每次加载都检查
+            clearLegacyStorage();
         }
 
         // Normal load from IndexedDB
@@ -129,6 +140,14 @@ async function migrateFromLocalStorage() {
     } catch (e) {
         console.error('迁移失败:', e);
     }
+}
+
+// ========== Clear legacy localStorage keys ========== //
+export function clearLegacyStorage() {
+    ['miniphone_chats', 'miniphone_characters', 'miniphone_settings',
+        'miniphone_moments', 'miniphone_sticker_packs', 'miniphone_stickers'
+    ].forEach(key => localStorage.removeItem(key));
+    console.log('🗑️ localStorage 旧键已清理');
 }
 
 // ========== Getters & Setters ========== //
