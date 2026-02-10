@@ -1,27 +1,27 @@
 /* Main Entry Point */
 console.log('Main.js loading...');
-import { loadFromLocalStorage } from './core/storage.js';
-import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
-import { handleAvatarUpload } from './core/utils.js';
-import { initSettings } from './apps/settings.js?v=25';
+import { loadFromLocalStorage } from './core/storage.js?v=26';
+import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js?v=26';
+import { handleAvatarUpload } from './core/utils.js?v=26';
+import { initSettings } from './apps/settings.js?v=26';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
     initEmojiPanel, toggleEmojiPanel, insertEmoji,
     generateSummary, openSummaryApp, openSummaryDetail,
     toggleChatMenu, openTransferModal, sendTransfer
-} from './apps/chat.js';
+} from './apps/chat.js?v=26';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
     commentOnMoment, showReplyInput, focusCommentInput
-} from './apps/moments.js';
+} from './apps/moments.js?v=26';
 import {
     renderCharacterGrid, openCharacterSelector, addNewCharacter,
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js?v=25';
+} from './apps/character.js?v=26';
 
 // ========== Initialization ========== //
 async function initApp() {
