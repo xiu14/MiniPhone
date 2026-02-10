@@ -59,6 +59,20 @@ export function initSettings() {
             document.getElementById('global-system-prompt').value = DEFAULT_WECHAT_PROMPT;
         });
     }
+
+    // Data Management
+    const exportBtn = document.getElementById('export-data-btn');
+    if (exportBtn) exportBtn.addEventListener('click', exportData);
+
+    const importBtn = document.getElementById('import-data-btn');
+    const importFile = document.getElementById('import-file');
+    if (importBtn && importFile) {
+        importBtn.addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) importData(e.target.files[0]);
+            e.target.value = '';
+        });
+    }
 }
 
 export function saveApiSettings() {
@@ -148,6 +162,57 @@ export function openGlobalPromptSettings() {
     const prompt = settings.globalSystemPrompt !== undefined ? settings.globalSystemPrompt : DEFAULT_WECHAT_PROMPT;
     document.getElementById('global-system-prompt').value = prompt;
     document.getElementById('global-prompt-modal').classList.add('active');
+}
+
+// ========== Data Export / Import ========== //
+function exportData() {
+    const dataStr = JSON.stringify(state);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
+    const exportFileDefaultName = `miniphone_backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.json`;
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+
+function importData(file) {
+    if (!file) return;
+
+    if (!confirm('导入备份将覆盖当前所有数据（聊天记录、角色、设置等），且无法撤销！\n\n确定要继续吗？')) {
+        return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const data = JSON.parse(e.target.result);
+
+            // Basic validation
+            if (!data.chats && !data.characters && !data.settings) {
+                alert('无效的备份文件：缺少关键数据');
+                return;
+            }
+
+            // Update state safely
+            if (data.chats) state.chats = data.chats;
+            if (data.characters) state.characters = data.characters;
+            if (data.moments) state.moments = data.moments;
+            // Filter out default pack if present in backup to avoid duplication/issues
+            if (data.stickerPacks) {
+                state.stickerPacks = data.stickerPacks.filter(p => p.id !== 'pack_default');
+            }
+            if (data.settings) state.settings = data.settings;
+
+            await saveToLocalStorage();
+            alert('数据恢复成功！页面即将刷新...');
+            window.location.reload();
+        } catch (err) {
+            console.error(err);
+            alert('导入失败：文件格式错误或数据损坏');
+        }
+    };
+    reader.readAsText(file);
 }
 
 
