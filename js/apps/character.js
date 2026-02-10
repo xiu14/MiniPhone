@@ -419,9 +419,15 @@ export async function regenerateCharX() {
     const btn = document.getElementById('regenerate-char-x-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X/Twitter 首页推文（3-4条）。推文要贴合角色的兴趣偏好和私密倾向，包含不同类型博主（亚文化圈/小众社区/同好），风格大胆奔放。每条来自不同博主。
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X (Twitter) 首页私密推文（3-4条）。
     
-只返回JSON数组，不要任何解释文字: [{"username": "显示名", "handle": "用户名", "content": "推文内容", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
+要求：
+1. 内容必须**深度反映**角色的性癖、私密欲望和不为人知的一面（NSFW/R18G/亚文化）。
+2. 包含角色关注的福利姬、黄推、网黄或特定癖好圈子（如BDSM/胶衣/足控等，根据人设自动匹配）。
+3. 风格要露骨、真实、充满暗示，就像角色深夜偷偷刷的内容。
+4. 每条推文来自不同的博主。
+
+只返回JSON数组，绝对不要任何解释及其他文字: [{"username": "显示名", "handle": "用户名", "content": "推文内容(可包含emoji)", "likes": 数字, "retweets": 数字, "replies": 数字, "minutesAgo": 1-1440}]`;
 
 
     const result = await generateCharContent(prompt);
