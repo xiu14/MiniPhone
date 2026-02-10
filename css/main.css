@@ -1,7 +1,7 @@
 /* Main CSS imports */
-@import 'base.css?v=26';
-@import 'layout.css?v=26';
-@import 'components.css?v=26';
-@import 'apps/chat.css?v=26';
-@import 'apps/moments.css?v=26';
-@import 'apps/character.css?v=26';
+@import 'base.css?v=28';
+@import 'layout.css?v=28';
+@import 'components.css?v=28';
+@import 'apps/chat.css?v=28';
+@import 'apps/moments.css?v=28';
+@import 'apps/character.css?v=28';

@@ -108,3 +108,34 @@ async function forceUpdate() {
         btn.disabled = false;
     }
 }
+
+
+// System Prompt Settings
+const DEFAULT_WECHAT_PROMPT = `你现在的回复风格必须完全模拟微信聊天：
+1. 回复要简短，口语化，不要像写信或写文章。
+2. 避免长段落，一次只回一两句话。
+3. 如果话题结束，可以不回复。
+4. 语气要自然，符合人设。`;
+
+export function openGlobalPromptSettings() {
+    const { settings } = state;
+    const prompt = settings.globalSystemPrompt !== undefined ? settings.globalSystemPrompt : DEFAULT_WECHAT_PROMPT;
+    document.getElementById('global-system-prompt').value = prompt;
+    document.getElementById('global-prompt-modal').classList.add('active');
+}
+
+// Bind Global Prompt Events
+document.getElementById('save-global-prompt-btn').addEventListener('click', () => {
+    state.settings.globalSystemPrompt = document.getElementById('global-system-prompt').value.trim();
+    saveToLocalStorage();
+    document.getElementById('global-prompt-modal').classList.remove('active');
+    alert('系统提示词已更新');
+});
+
+document.getElementById('cancel-global-prompt-btn').addEventListener('click', () => {
+    document.getElementById('global-prompt-modal').classList.remove('active');
+});
+
+document.getElementById('reset-global-prompt-btn').addEventListener('click', () => {
+    document.getElementById('global-system-prompt').value = DEFAULT_WECHAT_PROMPT;
+});

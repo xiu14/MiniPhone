@@ -188,7 +188,7 @@ export function renderChatMessages(chat) {
         const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         return `
-    <div class="message-row ${isUser ? 'sent' : 'received'}">
+    <div class="message-row ${isUser ? 'sent' : 'received'}" data-msg-index="${msgIndex}">
       ${!isUser ? avatarHtml : ''}
       <div class="${bubbleClass}" style="${bubbleStyle}">
         ${contentHtml}
@@ -199,6 +199,9 @@ export function renderChatMessages(chat) {
     }).join('');
 
     container.scrollTop = container.scrollHeight;
+
+    // Bind long-press to delete
+    bindLongPressDelete(container);
 }
 
 export function sendWithoutReply() {
@@ -631,6 +634,66 @@ export function toggleEmojiPanel() {
 export function insertEmoji(emoji) {
     // ...
 }
+
+// ========== Long Press Delete ==========
+
+let _longPressTimer = null;
+
+function bindLongPressDelete(container) {
+    const rows = container.querySelectorAll('.message-row[data-msg-index]');
+    rows.forEach(row => {
+        // Touch events (mobile)
+        row.addEventListener('touchstart', (e) => {
+            const idx = parseInt(row.getAttribute('data-msg-index'));
+            _longPressTimer = setTimeout(() => {
+                e.preventDefault();
+                showDeleteActionSheet(idx);
+            }, 500);
+        }, { passive: false });
+
+        row.addEventListener('touchend', () => clearTimeout(_longPressTimer));
+        row.addEventListener('touchmove', () => clearTimeout(_longPressTimer));
+
+        // Mouse events (desktop)
+        row.addEventListener('mousedown', () => {
+            const idx = parseInt(row.getAttribute('data-msg-index'));
+            _longPressTimer = setTimeout(() => showDeleteActionSheet(idx), 500);
+        });
+        row.addEventListener('mouseup', () => clearTimeout(_longPressTimer));
+        row.addEventListener('mouseleave', () => clearTimeout(_longPressTimer));
+    });
+}
+
+function showDeleteActionSheet(msgIndex) {
+    const chat = getCurrentChat();
+    if (!chat || !chat.messages[msgIndex]) return;
+
+    const msg = chat.messages[msgIndex];
+    const preview = msg.content.substring(0, 30).replace(/</g, '&lt;');
+
+    const overlay = document.getElementById('transfer-action-overlay');
+    document.getElementById('action-transfer-amount').textContent = '删除消息';
+    document.getElementById('action-transfer-note').textContent = preview + (msg.content.length > 30 ? '...' : '');
+
+    const btns = document.getElementById('transfer-action-btns');
+    btns.innerHTML = `
+        <button class="transfer-action-btn" style="background:#ff453a;color:#fff;" onclick="deleteMessage(${msgIndex})">删除这条消息</button>
+        <button class="transfer-action-btn cancel" onclick="document.getElementById('transfer-action-overlay').classList.remove('active')">取消</button>
+    `;
+
+    overlay.classList.add('active');
+}
+
+window.deleteMessage = function (msgIndex) {
+    const chat = getCurrentChat();
+    if (!chat || !chat.messages[msgIndex]) return;
+
+    chat.messages.splice(msgIndex, 1);
+    saveToLocalStorage();
+    renderChatMessages(chat);
+    renderChatList();
+    document.getElementById('transfer-action-overlay').classList.remove('active');
+};
 
 // ========== Transfer (转账) ==========
 

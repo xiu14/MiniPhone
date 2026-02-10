@@ -1,27 +1,27 @@
 /* Main Entry Point */
 console.log('Main.js loading...');
-import { loadFromLocalStorage } from './core/storage.js?v=26';
-import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js?v=26';
-import { handleAvatarUpload } from './core/utils.js?v=26';
-import { initSettings } from './apps/settings.js?v=26';
+import { loadFromLocalStorage } from './core/storage.js?v=28';
+import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js?v=28';
+import { handleAvatarUpload } from './core/utils.js?v=28';
+import { initSettings, openGlobalPromptSettings } from './apps/settings.js?v=28';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
     initEmojiPanel, toggleEmojiPanel, insertEmoji,
     generateSummary, openSummaryApp, openSummaryDetail,
     toggleChatMenu, openTransferModal, sendTransfer
-} from './apps/chat.js?v=26';
+} from './apps/chat.js?v=28';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
     commentOnMoment, showReplyInput, focusCommentInput
-} from './apps/moments.js?v=26';
+} from './apps/moments.js?v=28';
 import {
     renderCharacterGrid, openCharacterSelector, addNewCharacter,
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js?v=26';
+} from './apps/character.js?v=28';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -80,6 +80,7 @@ window.insertEmoji = insertEmoji;
 // Summaries
 window.openSummaryApp = openSummaryApp;
 window.openSummaryDetail = openSummaryDetail;
+window.openGlobalPromptSettings = openGlobalPromptSettings;
 
 // Transfer
 window.toggleChatMenu = toggleChatMenu;

@@ -45,10 +45,23 @@ export async function callAI(chat, systemPromptOverride = null) {
         }
     }
 
+
+
+    // Global System Prompt (Style)
+    const DEFAULT_WECHAT_PROMPT = `你现在的回复风格必须完全模拟微信聊天：
+1. 回复要简短，口语化，不要像写信或写文章。
+2. 避免长段落，一次只回一两句话。
+3. 如果话题结束，可以不回复。
+4. 语气要自然，符合人设。`;
+
+    const globalPrompt = settings.globalSystemPrompt !== undefined ? settings.globalSystemPrompt : DEFAULT_WECHAT_PROMPT;
+
     const systemPrompt = systemPromptOverride || `你现在扮演 "${chat.name}"。${chat.persona || ''}
 用户的名字是 "${settings.userName}"。
 用户的简介: ${settings.userBio || '无'}
 请保持角色扮演，使用自然、口语化的方式回复。回复要简短精炼。${cphoneContext}
+
+${globalPrompt}
 
 【转账功能】
 你可以在回复中发起转账，格式为：[transfer:{"amount":"金额","note":"备注","status":"pending","id":"tf_时间戳"}]
