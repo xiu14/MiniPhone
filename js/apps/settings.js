@@ -7,6 +7,7 @@ export function initSettings() {
     // Bind events
     document.getElementById('save-api-settings-btn').addEventListener('click', saveApiSettings);
     document.getElementById('fetch-models-btn').addEventListener('click', handleFetchModels);
+    document.getElementById('check-update-btn').addEventListener('click', forceUpdate);
 
     // Initialize UI values
     const { settings } = state;
@@ -73,5 +74,37 @@ async function handleFetchModels() {
         alert('模型列表已更新');
     } catch (e) {
         alert('拉取模型失败: ' + e.message);
+    }
+}
+
+async function forceUpdate() {
+    if (!confirm('这会强制清理所有缓存并刷新页面，确定吗？')) return;
+
+    const btn = document.getElementById('check-update-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '正在清理...';
+    btn.disabled = true;
+
+    try {
+        // 1. Unregister SW
+        if ('serviceWorker' in navigator) {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for (let registration of registrations) {
+                await registration.unregister();
+            }
+        }
+
+        // 2. Clear Caches
+        const keys = await caches.keys();
+        await Promise.all(keys.map(key => caches.delete(key)));
+
+        // 3. Reload
+        alert('清理完成，即将刷新！');
+        window.location.reload(true);
+    } catch (e) {
+        console.error(e);
+        alert('清理出错，请尝试手动清理浏览器数据');
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 }
