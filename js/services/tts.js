@@ -18,13 +18,22 @@ export async function playTTS(text, btnEl) {
         return;
     }
 
-    // 1. If clicking the SAME button that is playing, stop it.
+    // 1. If clicking the SAME button that is playing...
     if (currentAudio && currentBtn === btnEl) {
-        currentAudio.pause();
+        if (!currentAudio.paused) {
+            // It is actually playing -> Stop it
+            currentAudio.pause();
+            resetButton(currentBtn);
+            currentAudio = null;
+            currentBtn = null;
+            return;
+        }
+        // If it is paused/ended (but currentAudio still exists e.g. onended failed),
+        // we treat this as a REPLAY request.
+        // So we just cleanup and fall through to play logic.
         resetButton(currentBtn);
         currentAudio = null;
         currentBtn = null;
-        return;
     }
 
     // 2. Stop any OTHER playing audio
