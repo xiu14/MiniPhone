@@ -639,23 +639,23 @@
 /* ========== TTS 朗读按钮 ========== */
 .msg-with-tts {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    max-width: 75%;
+    flex-direction: row;
+    align-items: flex-end;
+    max-width: 85%;
 }
 
 .message-row.sent .msg-with-tts {
-    align-items: flex-end;
+    flex-direction: row-reverse;
 }
 
 .tts-btn {
-    font-size: 12px;
+    font-size: 14px;
     cursor: pointer;
-    opacity: 0.4;
-    padding: 2px 4px;
-    margin-top: 2px;
+    opacity: 0.5;
+    padding: 0 0 4px 8px;
     transition: opacity 0.2s, transform 0.15s;
     user-select: none;
+    flex-shrink: 0;
 }
 
 .tts-btn:hover {
