@@ -643,6 +643,11 @@
     margin-bottom: 2px;
 }
 
+.msg-with-tts .message {
+    max-width: 100%;
+    /* 关键修复：避免在 wrapper 内再次缩减宽度 */
+}
+
 .message-row.received .msg-with-tts {
     margin-right: 28px;
     /* 预留按钮空间 */
