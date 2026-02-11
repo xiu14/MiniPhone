@@ -85,29 +85,20 @@ export function initSettings() {
         });
     }
 
-    // New Local File Ops
+    // New Local File Ops: Handled via inline onclick in HTML to ensure execution
     const saveLocalBtn = document.getElementById('save-local-btn');
-    if (saveLocalBtn) {
-        if ('showSaveFilePicker' in window) {
-            saveLocalBtn.addEventListener('click', saveToLocalFile);
-        } else {
-            saveLocalBtn.style.display = 'none'; // Hide if not supported
-        }
+    if (saveLocalBtn && !('showSaveFilePicker' in window)) {
+        saveLocalBtn.style.display = 'none';
     }
     const openLocalBtn = document.getElementById('open-local-btn');
-    if (openLocalBtn) {
-        if ('showOpenFilePicker' in window) {
-            openLocalBtn.addEventListener('click', openLocalFile);
-        } else {
-            openLocalBtn.style.display = 'none';
-        }
+    if (openLocalBtn && !('showOpenFilePicker' in window)) {
+        openLocalBtn.style.display = 'none';
     }
-
-    // DEBUG: Expose to window
-    window.saveToLocalFile = saveToLocalFile;
-    window.openLocalFile = openLocalFile;
-    console.log('Settings: Local File functions attached to window');
 }
+// DEBUG: Expose to window
+window.saveToLocalFile = saveToLocalFile;
+window.openLocalFile = openLocalFile;
+console.log('Settings: Local File functions attached to window');
 
 export function saveApiSettings() {
     const { settings } = state;
@@ -289,6 +280,7 @@ async function openLocalFile() {
 }
 
 // Unified Import Logic
+// Unified Import Logic
 async function processImportData(fileOrData, useFileReader = true) {
     if (!confirm('即将覆盖当前所有数据！确定要继续吗？')) return;
 
@@ -334,6 +326,32 @@ async function processImportData(fileOrData, useFileReader = true) {
         alert('导入失败: ' + e.message);
     }
 }
+
+// Fallback: Copy to Clipboard
+async function copyDataToClipboard() {
+    try {
+        const dataStr = JSON.stringify(state);
+        await navigator.clipboard.writeText(dataStr);
+        alert('✅ 数据已复制到剪贴板！\n请找个地方（如记事本）粘贴保存。');
+    } catch (err) {
+        console.error('Clipboard failed:', err);
+        // Fallback for non-secure contexts
+        const textArea = document.createElement("textarea");
+        textArea.value = JSON.stringify(state);
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        alert('✅ 数据已复制到剪贴板 (Legacy)！');
+    }
+}
+
+// DEBUG & Globals: Expose immediately
+window.saveToLocalFile = saveToLocalFile;
+window.openLocalFile = openLocalFile;
+window.copyDataToClipboard = copyDataToClipboard;
+window.exportData = exportData; // Expose legacy export too
+console.log('Settings: Global functions exposed (saveToLocalFile, etc.)');
 
 // Export for debug
 window.diagnoseData = async () => {
