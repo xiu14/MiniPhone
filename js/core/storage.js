@@ -1,5 +1,5 @@
-/* Core: Storage & State Management (IndexedDB powered) */
-import { db } from './db.js';
+/* Core: Storage & State Management (Supabase-powered, NO IndexedDB) */
+import { silentUpload, silentDownload, isCloudReady } from '../services/supabase.js';
 
 export const state = {
     currentChatId: null,
@@ -20,139 +20,98 @@ export const state = {
         ttsVoiceId: '',
         ttsCluster: 'volcano_tts'
     },
-    stickerPacks: [] // { id, name, stickers: [] }
+    stickerPacks: []
 };
 
-// ========== Save to IndexedDB ========== //
+// ========== Debounce Timer ========== //
+let _saveTimer = null;
+const SAVE_DEBOUNCE_MS = 1500; // 1.5秒防抖
+
+// ========== Save to Supabase (带防抖) ========== //
 export async function saveToLocalStorage() {
-    try {
-        await db.transaction('rw', db.chats, db.characters, db.moments, db.stickerPacks, db.settings, async () => {
-            await db.chats.clear();
-            if (state.chats.length > 0) await db.chats.bulkPut(state.chats);
+    // 清除之前的定时器
+    if (_saveTimer) clearTimeout(_saveTimer);
 
-            await db.characters.clear();
-            if (state.characters.length > 0) await db.characters.bulkPut(state.characters);
-
-            await db.moments.clear();
-            if (state.moments.length > 0) await db.moments.bulkPut(state.moments);
-
-            await db.stickerPacks.clear();
-            if (state.stickerPacks.length > 0) await db.stickerPacks.bulkPut(state.stickerPacks);
-
-            await db.settings.put({ key: 'main', ...state.settings });
-        });
-    } catch (e) {
-        console.error('保存数据到 IndexedDB 失败:', e);
-        throw e;
-    }
-}
-
-// ========== Load from IndexedDB (with localStorage migration) ========== //
-export async function loadFromLocalStorage() {
-    try {
-        // Check if old localStorage data exists AND has real content
-        const legacyChatsRaw = localStorage.getItem('miniphone_chats');
-        const legacySettingsRaw = localStorage.getItem('miniphone_settings');
-        let hasRealLegacyData = false;
-        try {
-            if (legacyChatsRaw) {
-                const parsed = JSON.parse(legacyChatsRaw);
-                if (Array.isArray(parsed) && parsed.length > 0) hasRealLegacyData = true;
-            }
-            if (!hasRealLegacyData && legacySettingsRaw) {
-                const parsed = JSON.parse(legacySettingsRaw);
-                if (parsed && Object.keys(parsed).length > 0) hasRealLegacyData = true;
-            }
-        } catch (_) { /* ignore parse errors in legacy data */ }
-
-        // Only migrate if legacy data has real content AND DB is completely empty
-        const dbChatCount = await db.chats.count();
-        const dbCharCount = await db.characters.count();
-        if (hasRealLegacyData && dbChatCount === 0 && dbCharCount === 0) {
-            console.log('🔄 检测到 localStorage 旧数据且 DB 为空，正在迁移...');
-            await migrateFromLocalStorage();
-            console.log('✅ 数据迁移完成！');
+    // 防抖：1.5秒后才真正上传
+    _saveTimer = setTimeout(async () => {
+        if (!isCloudReady()) {
+            console.warn('☁️ 云端未配置，数据仅在内存中（刷新会丢失）');
             return;
-        } else if (legacyChatsRaw || legacySettingsRaw) {
-            console.warn('⚠️ localStorage 有旧键但不满足迁移条件 (DB已有数据或旧数据为空)，跳过迁移。');
-            // 主动清理无用旧键，防止每次加载都检查
-            clearLegacyStorage();
         }
-
-        // Normal load from IndexedDB
-        const [chats, characters, moments, stickerPacks, settingsRow] = await Promise.all([
-            db.chats.toArray(),
-            db.characters.toArray(),
-            db.moments.toArray(),
-            db.stickerPacks.toArray(),
-            db.settings.get('main')
-        ]);
-
-        if (chats.length > 0) state.chats = chats;
-        if (characters.length > 0) state.characters = characters;
-        if (moments.length > 0) state.moments = moments;
-        if (stickerPacks.length > 0) {
-            state.stickerPacks = stickerPacks.filter(p => p.id !== 'pack_default');
+        const ok = await silentUpload(state);
+        if (ok) {
+            showSyncToast('✅ 已同步');
+        } else {
+            showSyncToast('⚠️ 同步失败', true);
         }
-        if (settingsRow) {
-            const { key, ...settingsData } = settingsRow;
-            state.settings = { ...state.settings, ...settingsData };
-        }
-
-        console.log(`📦 IndexedDB 加载完成: ${chats.length} 聊天, ${characters.length} 角色, ${moments.length} 动态`);
-    } catch (e) {
-        console.error('加载数据失败:', e);
-    }
+    }, SAVE_DEBOUNCE_MS);
 }
 
-// ========== One-time migration from localStorage → IndexedDB ========== //
-async function migrateFromLocalStorage() {
+// ========== Force Save (不防抖，立即上传) ========== //
+export async function forceSave() {
+    if (_saveTimer) clearTimeout(_saveTimer);
+    if (!isCloudReady()) return false;
+    const ok = await silentUpload(state);
+    if (ok) showSyncToast('✅ 已同步');
+    return ok;
+}
+
+// ========== Load from Supabase ========== //
+export async function loadFromLocalStorage() {
+    if (!isCloudReady()) {
+        console.log('☁️ 云端未配置，将以空数据启动');
+        return;
+    }
+
     try {
-        const savedChats = localStorage.getItem('miniphone_chats');
-        const savedCharacters = localStorage.getItem('miniphone_characters');
-        const savedSettings = localStorage.getItem('miniphone_settings');
-        const savedMoments = localStorage.getItem('miniphone_moments');
-        const savedStickerPacks = localStorage.getItem('miniphone_sticker_packs');
-        const savedLegacyStickers = localStorage.getItem('miniphone_stickers');
+        showSyncToast('☁️ 正在从云端加载...');
+        const cloudData = await silentDownload();
 
-        if (savedChats) state.chats = JSON.parse(savedChats);
-        if (savedCharacters) state.characters = JSON.parse(savedCharacters);
-        if (savedMoments) state.moments = JSON.parse(savedMoments);
-
-        if (savedStickerPacks) {
-            state.stickerPacks = JSON.parse(savedStickerPacks).filter(p => p.id !== 'pack_default');
-        } else if (savedLegacyStickers) {
-            state.stickerPacks = [{
-                id: 'pack_legacy',
-                name: '收藏',
-                stickers: JSON.parse(savedLegacyStickers)
-            }];
+        if (cloudData) {
+            if (cloudData.chats) state.chats = cloudData.chats;
+            if (cloudData.characters) state.characters = cloudData.characters;
+            state.moments = cloudData.moments || [];
+            if (cloudData.stickerPacks) {
+                state.stickerPacks = cloudData.stickerPacks.filter(p => p.id !== 'pack_default');
+            }
+            if (cloudData.settings) {
+                state.settings = { ...state.settings, ...cloudData.settings };
+            }
+            console.log(`☁️ 数据已从 Supabase 加载: ${state.chats.length} 聊天, ${state.characters.length} 角色`);
+            showSyncToast('✅ 数据已加载');
+        } else {
+            console.log('☁️ 云端无数据（首次使用）');
+            showSyncToast('☁️ 首次使用，云端无数据');
         }
-
-        if (savedSettings) {
-            state.settings = { ...state.settings, ...JSON.parse(savedSettings) };
-        }
-
-        // Write migrated data to IndexedDB
-        await saveToLocalStorage();
-
-        // Clean up old localStorage keys
-        ['miniphone_chats', 'miniphone_characters', 'miniphone_settings',
-            'miniphone_moments', 'miniphone_sticker_packs', 'miniphone_stickers'
-        ].forEach(key => localStorage.removeItem(key));
-
-        console.log('🗑️ localStorage 旧数据已清理');
     } catch (e) {
-        console.error('迁移失败:', e);
+        console.error('☁️ 加载失败:', e);
+        showSyncToast('❌ 云端加载失败', true);
     }
 }
 
-// ========== Clear legacy localStorage keys ========== //
-export function clearLegacyStorage() {
-    ['miniphone_chats', 'miniphone_characters', 'miniphone_settings',
-        'miniphone_moments', 'miniphone_sticker_packs', 'miniphone_stickers'
-    ].forEach(key => localStorage.removeItem(key));
-    console.log('🗑️ localStorage 旧键已清理');
+// ========== Sync Toast (小提示) ========== //
+function showSyncToast(message, isError = false) {
+    let toast = document.getElementById('sync-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'sync-toast';
+        toast.style.cssText = `
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            padding: 8px 18px; border-radius: 20px; font-size: 12px; z-index: 99999;
+            background: rgba(30,30,30,0.9); color: #fff; backdrop-filter: blur(10px);
+            transition: opacity 0.3s; pointer-events: none;
+        `;
+        document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.style.opacity = '1';
+    if (isError) toast.style.color = '#ff6b6b';
+    else toast.style.color = '#fff';
+
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => {
+        toast.style.opacity = '0';
+    }, 2500);
 }
 
 // ========== Getters & Setters ========== //
@@ -170,4 +129,14 @@ export function setCurrentChatId(id) {
 
 export function setCurrentCharacterId(id) {
     state.currentCharacterId = id;
+}
+
+// ========== Legacy cleanup (no-op now) ========== //
+export function clearLegacyStorage() {
+    // 清理所有旧的 localStorage 数据键（连接配置除外）
+    ['miniphone_chats', 'miniphone_characters', 'miniphone_settings',
+        'miniphone_moments', 'miniphone_sticker_packs', 'miniphone_stickers',
+        'miniphone_last_upload', 'miniphone_last_download'
+    ].forEach(key => localStorage.removeItem(key));
+    console.log('🗑️ 旧 localStorage 数据键已清理');
 }

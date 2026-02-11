@@ -1,9 +1,9 @@
 /* Apps: Settings */
-import { state, saveToLocalStorage, clearLegacyStorage } from '../core/storage.js';
-import { db } from '../core/db.js';
+import { state, saveToLocalStorage, clearLegacyStorage, forceSave } from '../core/storage.js';
 import { fetchModels } from '../services/api.js';
 import { handleAvatarUpload } from '../core/utils.js';
-import { testTTS } from '../services/tts.js';
+import { testTTS, clearTTSCache } from '../services/tts.js';
+import { saveCloudConfig, getStoredCloudConfig, uploadToCloud, downloadFromCloud, testConnection, isCloudReady } from '../services/supabase.js';
 
 export function initSettings() {
     // Bind events
@@ -26,6 +26,8 @@ export function initSettings() {
     if (document.getElementById('tts-cluster')) document.getElementById('tts-cluster').value = settings.ttsCluster || 'volcano_tts';
     const testTtsBtn = document.getElementById('test-tts-btn');
     if (testTtsBtn) testTtsBtn.addEventListener('click', testTTS);
+    const clearTtsCacheBtn = document.getElementById('clear-tts-cache-btn');
+    if (clearTtsCacheBtn) clearTtsCacheBtn.addEventListener('click', handleClearTTSCache);
 
     // Fix model select
     const modelSelect = document.getElementById('model-select');
@@ -71,34 +73,10 @@ export function initSettings() {
         });
     }
 
-    // Data Management
-    const exportBtn = document.getElementById('export-data-btn');
-    if (exportBtn) exportBtn.addEventListener('click', exportData);
-
-    const importBtn = document.getElementById('import-data-btn');
-    const importFile = document.getElementById('import-file');
-    if (importBtn && importFile) {
-        importBtn.addEventListener('click', () => importFile.click());
-        importFile.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) processImportData(e.target.files[0], true);
-            e.target.value = '';
-        });
-    }
-
-    // New Local File Ops: Handled via inline onclick in HTML to ensure execution
-    const saveLocalBtn = document.getElementById('save-local-btn');
-    if (saveLocalBtn && !('showSaveFilePicker' in window)) {
-        saveLocalBtn.style.display = 'none';
-    }
-    const openLocalBtn = document.getElementById('open-local-btn');
-    if (openLocalBtn && !('showOpenFilePicker' in window)) {
-        openLocalBtn.style.display = 'none';
-    }
+    // Cloud Sync
+    initCloudSettings();
 }
-// DEBUG: Expose to window
-window.saveToLocalFile = saveToLocalFile;
-window.openLocalFile = openLocalFile;
-console.log('Settings: Local File functions attached to window');
+
 
 export function saveApiSettings() {
     const { settings } = state;
@@ -181,6 +159,30 @@ async function forceUpdate() {
     }
 }
 
+// ========== Clear TTS Cache ========== //
+async function handleClearTTSCache() {
+    if (!confirm('确定要清空所有语音缓存吗？\n清空后再次播放语音需要重新生成。')) return;
+
+    const btn = document.getElementById('clear-tts-cache-btn');
+    const orig = btn.textContent;
+    btn.textContent = '🗑️ 正在清空...';
+    btn.disabled = true;
+
+    try {
+        const ok = await clearTTSCache();
+        if (ok) {
+            alert('✅ 语音缓存已清空');
+        } else {
+            alert('⚠️ 清空失败，请检查云端配置');
+        }
+    } catch (e) {
+        alert('❌ 清空失败: ' + e.message);
+    } finally {
+        btn.textContent = orig;
+        btn.disabled = false;
+    }
+}
+
 
 // System Prompt Settings
 const DEFAULT_WECHAT_PROMPT = `你现在的回复风格必须完全模拟微信聊天：
@@ -196,183 +198,130 @@ export function openGlobalPromptSettings() {
     document.getElementById('global-prompt-modal').classList.add('active');
 }
 
-// Legacy Export
-function exportData() {
+
+// ========== Cloud Sync ========== //
+function initCloudSettings() {
+    const config = getStoredCloudConfig();
+    if (config) {
+        const urlInput = document.getElementById('cloud-url');
+        const keyInput = document.getElementById('cloud-anon-key');
+        const syncInput = document.getElementById('cloud-sync-key');
+        if (urlInput) urlInput.value = config.url || '';
+        if (keyInput) keyInput.value = config.anonKey || '';
+        if (syncInput) syncInput.value = config.syncKey || '';
+    }
+    updateCloudStatus();
+
+    // Bind buttons
+    const saveBtn = document.getElementById('save-cloud-config-btn');
+    if (saveBtn) saveBtn.addEventListener('click', handleSaveCloudConfig);
+
+    const uploadBtn = document.getElementById('cloud-upload-btn');
+    if (uploadBtn) uploadBtn.addEventListener('click', handleCloudUpload);
+
+    const downloadBtn = document.getElementById('cloud-download-btn');
+    if (downloadBtn) downloadBtn.addEventListener('click', handleCloudDownload);
+}
+
+function updateCloudStatus() {
+    const el = document.getElementById('cloud-status');
+    if (!el) return;
+    el.textContent = isCloudReady() ? '✅ 云端已连接（数据自动同步）' : '⚠️ 未配置，数据仅在内存中';
+}
+
+async function handleSaveCloudConfig() {
+    const url = document.getElementById('cloud-url').value.trim();
+    const anonKey = document.getElementById('cloud-anon-key').value.trim();
+    const syncKey = document.getElementById('cloud-sync-key').value.trim();
+    if (!url || !anonKey || !syncKey) {
+        alert('请填写完整的云同步配置');
+        return;
+    }
+    saveCloudConfig(url, anonKey, syncKey);
+
+    // Test connection
     try {
-        const dataStr = JSON.stringify(state);
-        const blob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const exportFileDefaultName = `miniphone_backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.json`;
-
-        const linkElement = document.createElement('a');
-        linkElement.setAttribute('href', url);
-        linkElement.setAttribute('download', exportFileDefaultName);
-        document.body.appendChild(linkElement);
-        linkElement.click();
-        document.body.removeChild(linkElement);
-
-        // Cleanup
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        await testConnection();
+        alert('✅ 云配置已保存，连接测试成功！');
     } catch (e) {
-        console.error('Export failed:', e);
-        alert('导出失败: ' + e.message);
+        alert('⚠️ 云配置已保存，但连接测试失败:\n' + e.message + '\n\n请检查 URL、Key 是否正确，以及 user_data 表是否已创建。');
     }
 }
 
-// New: Save to Local File (File System Access API)
-async function saveToLocalFile() {
-    const btn = document.getElementById('save-local-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '💾 正在调用系统保存...';
-    btn.disabled = true;
+async function handleCloudUpload() {
+    const config = getStoredCloudConfig();
+    if (!config?.url || !config?.anonKey || !config?.syncKey) {
+        alert('请先保存云同步配置');
+        return;
+    }
+    if (!confirm('确定要将当前数据上传到云端吗？\n这会覆盖云端已有的备份。')) return;
 
+    const btn = document.getElementById('cloud-upload-btn');
+    const orig = btn.textContent;
+    btn.textContent = '☁️ 正在上传...';
+    btn.disabled = true;
     try {
-        const options = {
-            suggestedName: `miniphone_data_${new Date().toISOString().slice(0, 10)}.json`,
-            types: [{
-                description: 'MiniPhone JSON Data',
-                accept: { 'application/json': ['.json'] },
-            }],
-        };
-        const handle = await window.showSaveFilePicker(options);
-        const writable = await handle.createWritable();
-        const dataStr = JSON.stringify(state);
-        await writable.write(dataStr);
-        await writable.close();
-        alert('✅ 数据已保存到本地文件！');
-    } catch (err) {
-        if (err.name !== 'AbortError') {
-            console.error(err);
-            alert('保存失败，将尝试普通下载模式: ' + err.message);
-            // Fallback to Blob download
-            exportData();
-        }
+        await uploadToCloud(state);
+        alert('✅ 数据已上传到云端！');
+        updateCloudStatus();
+    } catch (e) {
+        console.error(e);
+        alert('❌ 上传失败: ' + e.message);
     } finally {
-        btn.textContent = originalText;
+        btn.textContent = orig;
         btn.disabled = false;
     }
 }
 
-// New: Open Local File
-async function openLocalFile() {
-    const btn = document.getElementById('open-local-btn');
-    const originalText = btn.textContent;
-    btn.textContent = '📂 正在打开...';
-
-    try {
-        const [handle] = await window.showOpenFilePicker({
-            types: [{
-                description: 'JSON Files',
-                accept: { 'application/json': ['.json'] },
-            }],
-            multiple: false
-        });
-        const file = await handle.getFile();
-        await processImportData(file, false);
-    } catch (err) {
-        if (err.name !== 'AbortError') {
-            console.error(err);
-            alert('打开文件失败: ' + err.message);
-        }
-    } finally {
-        btn.textContent = originalText;
+async function handleCloudDownload() {
+    const config = getStoredCloudConfig();
+    if (!config?.url || !config?.anonKey || !config?.syncKey) {
+        alert('请先保存云同步配置');
+        return;
     }
-}
+    if (!confirm('确定要从云端下载数据吗？\n这会覆盖当前所有数据！')) return;
 
-// Unified Import Logic
-// Unified Import Logic
-async function processImportData(fileOrData, useFileReader = true) {
-    if (!confirm('即将覆盖当前所有数据！确定要继续吗？')) return;
-
-    let jsonStr = '';
+    const btn = document.getElementById('cloud-download-btn');
+    const orig = btn.textContent;
+    btn.textContent = '⬇️ 正在下载...';
+    btn.disabled = true;
     try {
-        if (useFileReader) {
-            jsonStr = await new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result);
-                reader.onerror = e => reject(e);
-                reader.readAsText(fileOrData);
-            });
-        } else {
-            // It's a File object from openLocalFile
-            jsonStr = await fileOrData.text();
+        const cloudData = await downloadFromCloud();
+
+        // Apply cloud data to state
+        if (cloudData.chats) state.chats = cloudData.chats;
+        if (cloudData.characters) state.characters = cloudData.characters;
+        state.moments = cloudData.moments || [];
+        if (cloudData.stickerPacks) {
+            state.stickerPacks = cloudData.stickerPacks.filter(p => p.id !== 'pack_default');
         }
+        if (cloudData.settings) state.settings = { ...state.settings, ...cloudData.settings };
 
-        const data = JSON.parse(jsonStr);
-
-        // Basic validation
-        if (!data.chats && !data.characters && !data.settings) {
-            alert('无效的数据文件');
-            return;
-        }
-
-        // Apply Data
-        if (data.chats) state.chats = data.chats;
-        if (data.characters) state.characters = data.characters;
-        state.moments = data.moments || [];
-        if (data.stickerPacks) {
-            state.stickerPacks = data.stickerPacks.filter(p => p.id !== 'pack_default');
-        }
-        if (data.settings) state.settings = { ...state.settings, ...data.settings };
-
-        await saveToLocalStorage();
-        clearLegacyStorage();
-
-        alert('✅ 数据恢复成功！即将刷新页面...');
+        updateCloudStatus();
+        alert('✅ 数据已从云端恢复！即将刷新页面...');
         setTimeout(() => window.location.reload(), 500);
-
     } catch (e) {
         console.error(e);
-        alert('导入失败: ' + e.message);
+        alert('❌ 下载失败: ' + e.message);
+    } finally {
+        btn.textContent = orig;
+        btn.disabled = false;
     }
 }
-
-// Fallback: Copy to Clipboard
-async function copyDataToClipboard() {
-    try {
-        const dataStr = JSON.stringify(state);
-        await navigator.clipboard.writeText(dataStr);
-        alert('✅ 数据已复制到剪贴板！\n请找个地方（如记事本）粘贴保存。');
-    } catch (err) {
-        console.error('Clipboard failed:', err);
-        // Fallback for non-secure contexts
-        const textArea = document.createElement("textarea");
-        textArea.value = JSON.stringify(state);
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        alert('✅ 数据已复制到剪贴板 (Legacy)！');
-    }
-}
-
-// DEBUG & Globals: Expose immediately
-window.saveToLocalFile = saveToLocalFile;
-window.openLocalFile = openLocalFile;
-window.copyDataToClipboard = copyDataToClipboard;
-window.exportData = exportData; // Expose legacy export too
-console.log('Settings: Global functions exposed (saveToLocalFile, etc.)');
 
 // Export for debug
 window.diagnoseData = async () => {
     try {
-        const dbChats = await db.chats.count();
-        const dbChars = await db.characters.count();
-        const dbSettings = await db.settings.get('main');
-        const legacyChats = localStorage.getItem('miniphone_chats') ? 'YES' : 'NO';
-        const legacySettings = localStorage.getItem('miniphone_settings') ? 'YES' : 'NO';
-
         const info = `【数据诊断报告】\n` +
-            `DB 聊天记录: ${dbChats}\n` +
-            `DB 角色卡片: ${dbChars}\n` +
-            `内存 聊天记录: ${state.chats.length}\n` +
-            `LocalStorage 残留: Chat=${legacyChats}, Set=${legacySettings}\n` +
-            `DB 设置: ${dbSettings ? 'OK' : 'MISSING'}\n\n` +
-            `如果是 0 但你刚导入过，说明保存后被清空了。\n` +
-            `如果是 有数值 但界面没显示，说明加载过程出错。`;
+            `存储模式: 纯 Supabase\n` +
+            `云端已配置: ${isCloudReady() ? 'YES' : 'NO'}\n` +
+            `内存 聊天: ${state.chats.length}\n` +
+            `内存 角色: ${state.characters.length}\n` +
+            `内存 动态: ${state.moments.length}\n` +
+            `内存 设置: ${state.settings.proxyUrl ? '已配置API' : '未配置API'}`;
 
         alert(info);
-        console.log(state);
+        console.log('完整 state:', JSON.parse(JSON.stringify(state)));
     } catch (e) {
         alert('诊断出错: ' + e.message);
     }

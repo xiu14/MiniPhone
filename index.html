@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=57">
+    <link rel="stylesheet" href="css/main.css?v=60">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=57');
+            await import('./js/main.js?v=60');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -626,41 +626,38 @@
                 </div>
                 <button class="form-button" id="test-tts-btn" style="background:#ff6d00;margin-bottom:8px;">🔊
                     测试语音</button>
+                <button class="form-button" id="clear-tts-cache-btn" style="background:#78909c;margin-bottom:8px;">🗑️
+                    清空语音缓存</button>
 
                 <button class="form-button save-btn" id="save-api-settings-btn">保存设置</button>
 
                 <hr style="margin: 30px 0;">
 
-                <h3>数据管理</h3>
-                <div class="form-group">
-                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
-                        本地文件直读写 (推荐 PC 端使用，数据保存在硬盘):
-                    </div>
-                    <button class="form-button" id="save-local-btn"
-                        onclick="window.saveToLocalFile && window.saveToLocalFile()"
-                        style="background:var(--accent-color); margin-bottom: 8px;">💾
-                        另存为本地文件</button>
-                    <button class="form-button" id="open-local-btn"
-                        onclick="window.openLocalFile && window.openLocalFile()"
-                        style="background:var(--bg-tertiary); margin-bottom: 20px;">📂
-                        打开本地文件</button>
-
-                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">保底方案 (如果上面都不行):</div>
-                    <button class="form-button" onclick="window.copyDataToClipboard && window.copyDataToClipboard()"
-                        style="background:var(--bg-secondary); margin-bottom: 20px;">📋
-                        复制全部数据到剪贴板</button>
-
-                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">旧版浏览器备份 (下载/上传 JSON):
-                    </div>
-                    <button class="form-button" id="export-data-btn" onclick="window.exportData && window.exportData()"
-                        style="background:var(--bg-tertiary);">⬇️
-                        下载全量备份</button>
-                    <button class="form-button" id="import-data-btn"
-                        style="background:var(--bg-tertiary);margin-top:8px;">⬆️ 导入全量备份</button>
-                    <input type="file" id="import-file" style="display:none" accept=".json">
-                    <button class="form-button" onclick="window.diagnoseData()"
-                        style="background:#4a148c;margin-top:10px;font-size:12px;">🛠️ 数据诊断 (遇到问题点我)</button>
+                <h3>☁️ 云同步</h3>
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    Supabase 是你的唯一数据库。配置后，所有数据自动保存到云端。换设备只需重新填写此配置即可恢复所有数据。
                 </div>
+                <div class="form-group">
+                    <label>Supabase URL</label>
+                    <input type="text" id="cloud-url" placeholder="https://xxxxx.supabase.co">
+                </div>
+                <div class="form-group">
+                    <label>Supabase Anon Key</label>
+                    <input type="password" id="cloud-anon-key" placeholder="eyJhbGci...">
+                </div>
+                <div class="form-group">
+                    <label>同步密钥（自定义，相同密钥共享数据）</label>
+                    <input type="text" id="cloud-sync-key" placeholder="输入你的密钥，如: myphone123">
+                </div>
+                <button class="form-button" id="save-cloud-config-btn" style="background:#6366f1;margin-bottom:8px;">💾
+                    保存云配置</button>
+                <button class="form-button" id="cloud-upload-btn" style="background:#10b981;margin-bottom:8px;">☁️
+                    上传备份到云端</button>
+                <button class="form-button" id="cloud-download-btn" style="background:#3b82f6;margin-bottom:8px;">⬇️
+                    从云端下载恢复</button>
+                <div id="cloud-status"
+                    style="font-size:12px;color:var(--text-secondary);margin-top:4px;margin-bottom:8px;"></div>
+
 
                 <hr style="margin: 30px 0;">
 
@@ -669,7 +666,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v57 (Fix Syntax Error)</span>
+                        <span style="color:#888;">v60 (Supabase-only Backend)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

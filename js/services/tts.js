@@ -1,10 +1,38 @@
 /* Services: TTS (Text-to-Speech) via Volcengine proxy */
 import { state } from '../core/storage.js';
+import { getTTSCache, saveTTSCacheEntry, clearTTSCacheEntries, isCloudReady } from './supabase.js';
 
-// Simple in-memory audio cache: text -> base64
+// Dual-layer cache: in-memory Map (L1) + Supabase tts_cache table (L2)
 const audioCache = new Map();
 let currentAudio = null;
 let currentBtn = null;
+let _cacheLoaded = false;
+
+/**
+ * Load TTS cache from Supabase into memory (call once on app startup)
+ */
+export async function loadTTSCache() {
+    if (!isCloudReady()) return;
+    try {
+        const rows = await getTTSCache();
+        for (const row of rows) {
+            audioCache.set(row.cache_key, row.audio_base64);
+        }
+        _cacheLoaded = true;
+        console.log(`🔊 [TTS Cache] 已从 Supabase 加载 ${rows.length} 条缓存`);
+    } catch (e) {
+        console.warn('🔊 [TTS Cache] 加载失败:', e.message);
+    }
+}
+
+/**
+ * Clear all TTS cache (memory + Supabase)
+ */
+export async function clearTTSCache() {
+    audioCache.clear();
+    const ok = await clearTTSCacheEntries();
+    return ok;
+}
 
 /**
  * Play TTS for given text, using the button element for UI feedback
@@ -43,10 +71,11 @@ export async function playTTS(text, btnEl) {
         currentBtn = null;
     }
 
-    // Check cache
+    // Build cache key
     const cacheKey = text.substring(0, 200);
+
+    // L1: Check in-memory cache
     if (audioCache.has(cacheKey)) {
-        // console.log("Playing from cache:", cacheKey);
         playBase64Audio(audioCache.get(cacheKey), btnEl, cacheKey);
         return;
     }
@@ -73,7 +102,10 @@ export async function playTTS(text, btnEl) {
         const data = await response.json();
 
         if (data.success && data.audio_base64) {
+            // L1: Write to memory
             audioCache.set(cacheKey, data.audio_base64);
+            // L2: Write to Supabase (async, don't await — fire & forget)
+            saveTTSCacheEntry(cacheKey, data.audio_base64);
             playBase64Audio(data.audio_base64, btnEl, cacheKey);
         } else {
             console.error('TTS failed:', data.message);

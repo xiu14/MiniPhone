@@ -1,9 +1,9 @@
-/* Main Entry Point */
+/* Main Entry Point — Supabase-only storage */
 console.log('Main.js loading...');
-import { loadFromLocalStorage } from './core/storage.js?v=54';
-import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js?v=54';
-import { handleAvatarUpload } from './core/utils.js?v=54';
-import { initSettings, openGlobalPromptSettings } from './apps/settings.js?v=54';
+import { loadFromLocalStorage, state } from './core/storage.js';
+import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
+import { handleAvatarUpload } from './core/utils.js';
+import { initSettings, openGlobalPromptSettings } from './apps/settings.js';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
@@ -12,24 +12,31 @@ import {
     toggleChatMenu, openTransferModal, sendTransfer,
     openVoiceModal, sendVoiceMessage,
     openImageMsgModal, sendImageMessage
-} from './apps/chat.js?v=54';
-import { playTTS } from './services/tts.js?v=54';
+} from './apps/chat.js';
+import { playTTS, loadTTSCache } from './services/tts.js';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
     commentOnMoment, showReplyInput, focusCommentInput
-} from './apps/moments.js?v=54';
+} from './apps/moments.js';
 import {
     renderCharacterGrid, openCharacterSelector, addNewCharacter,
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js?v=54';
+} from './apps/character.js';
+import { isCloudReady } from './services/supabase.js';
 
 // ========== Initialization ========== //
 async function initApp() {
     console.log('App Initializing...');
+
+    // 从 Supabase 加载数据
     await loadFromLocalStorage();
+
+    // 调试：打印加载后的 state
+    console.log('📦 加载后 state.settings:', JSON.stringify(state.settings).slice(0, 300));
+    console.log('📦 加载后 chats:', state.chats.length, 'characters:', state.characters.length);
 
     // UI Updates
     updateStatusBar();
@@ -37,13 +44,24 @@ async function initApp() {
     setInterval(updateStatusBar, 60000);
     setInterval(updateHomeClock, 1000);
 
-    // Initial Renders
-    renderChatList();
-    renderCharacterGrid();
-    initEmojiPanel();
-    initSettings();
+    // Initial Renders — 每步独立 try-catch，防止一个崩溃影响其他
+    try { renderChatList(); } catch (e) { console.error('renderChatList 失败:', e); }
+    try { renderCharacterGrid(); } catch (e) { console.error('renderCharacterGrid 失败:', e); }
+    try { initEmojiPanel(); } catch (e) { console.error('initEmojiPanel 失败:', e); }
+    try { initSettings(); } catch (e) { console.error('initSettings 失败:', e); }
+    try { bindGlobalListeners(); } catch (e) { console.error('bindGlobalListeners 失败:', e); }
 
-    bindGlobalListeners();
+    // Load TTS cache from Supabase (non-blocking)
+    loadTTSCache().catch(e => console.warn('TTS 缓存加载失败:', e));
+
+    // 如果云端未配置，引导用户到设置页
+    if (!isCloudReady()) {
+        setTimeout(() => {
+            showScreen('api-settings-screen');
+            alert('👋 欢迎使用 MiniPhone！\n\n请先配置「云端同步」，这样你的数据会安全保存在云端，不怕清缓存。\n\n请滚动到底部找到「☁️ 云端同步」区域。');
+        }, 500);
+    }
+
     console.log('App Initialized successfully');
 }
 
