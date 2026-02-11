@@ -56,9 +56,21 @@ export async function callAI(chat, systemPromptOverride = null) {
 
     const globalPrompt = settings.globalSystemPrompt !== undefined ? settings.globalSystemPrompt : DEFAULT_WECHAT_PROMPT;
 
+    const now = new Date();
+    const timeStr = now.toLocaleString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long', hour:'2-digit', minute:'2-digit', hour12: false });
+
     const systemPrompt = systemPromptOverride || `你现在扮演 "${chat.name}"。${chat.persona || ''}
 用户的名字是 "${settings.userName}"。
 用户的简介: ${settings.userBio || '无'}
+
+【当前时间】${timeStr}
+请根据当前时间自然地调整你的行为和语气。例如：
+- 深夜(23:00-6:00)：你应该困倦、想睡觉，或者已经入睡不回复，除非人设特殊
+- 早上(6:00-9:00)：可以说早安、刚起床等
+- 中午(11:30-13:30)：可以提到吃饭
+- 晚上(18:00-22:00)：可以说晚安、下班等
+不需要每次都提到时间，但行为要符合时间逻辑。
+
 请保持角色扮演，使用自然、口语化的方式回复。回复要简短精炼。${cphoneContext}
 
 ${globalPrompt}
@@ -124,7 +136,7 @@ ${globalPrompt}
             model: settings.model,
             messages,
             temperature: 0.8,
-            max_tokens: 500
+            max_tokens: 800
         })
     });
 

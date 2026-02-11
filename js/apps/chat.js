@@ -113,6 +113,41 @@ export function openChat(chatId) {
     showScreen('chat-interface-screen');
 }
 
+// 微信风格时间格式化
+function formatChatTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const yesterday = new Date(today.getTime() - 86400000);
+    const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const timeStr = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+
+    if (msgDay.getTime() === today.getTime()) {
+        return timeStr;
+    } else if (msgDay.getTime() === yesterday.getTime()) {
+        return `昨天 ${timeStr}`;
+    } else {
+        // 检查是否在本周内
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - today.getDay());
+        if (msgDay >= weekStart) {
+            const days = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            return `${days[date.getDay()]} ${timeStr}`;
+        } else if (date.getFullYear() === now.getFullYear()) {
+            return `${date.getMonth() + 1}月${date.getDate()}日 ${timeStr}`;
+        } else {
+            return `${date.getFullYear()}/${date.getMonth() + 1}/${date.getDate()} ${timeStr}`;
+        }
+    }
+}
+
+// 判断两条消息之间是否需要显示时间分隔符（间隔>=5分钟）
+function shouldShowTime(prevTimestamp, curTimestamp) {
+    if (!prevTimestamp || !curTimestamp) return true;
+    return (curTimestamp - prevTimestamp) >= 5 * 60 * 1000;
+}
+
 export function renderChatMessages(chat) {
     const container = document.getElementById('chat-messages');
     const { settings } = state;
@@ -128,6 +163,15 @@ export function renderChatMessages(chat) {
     }
 
     container.innerHTML = chat.messages.map((msg, msgIndex) => {
+        // 微信风格时间分隔符
+        let timeDividerHtml = '';
+        const prevMsg = msgIndex > 0 ? chat.messages[msgIndex - 1] : null;
+        if (msgIndex === 0 || shouldShowTime(prevMsg?.timestamp, msg.timestamp)) {
+            const timeLabel = formatChatTime(msg.timestamp || Date.now());
+            if (timeLabel) {
+                timeDividerHtml = `<div class="chat-time-divider">${timeLabel}</div>`;
+            }
+        }
         const isUser = msg.role === 'user';
 
         let contentHtml = msg.content;
@@ -166,6 +210,11 @@ export function renderChatMessages(chat) {
             contentHtml = contentHtml.replace(/\[sticker:(.*?)\]/g, (match, url) => {
                 return `<img src="${url}" class="chat-sticker-img" onclick="window.open(this.src, '_blank')">`;
             });
+
+            // Fallback: render incomplete sticker tags (truncated by API max_tokens)
+            contentHtml = contentHtml.replace(/\[sticker:(https?:\/\/[^\s\]]+)/g, (match, url) => {
+                return `<img src="${url}" class="chat-sticker-img" onclick="window.open(this.src, '_blank')">`;
+            });
         }
 
         let avatarHtml;
@@ -188,6 +237,7 @@ export function renderChatMessages(chat) {
         const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         return `
+    ${timeDividerHtml}
     <div class="message-row ${isUser ? 'sent' : 'received'}" data-msg-index="${msgIndex}">
       ${!isUser ? avatarHtml : ''}
       <div class="${bubbleClass}" style="${bubbleStyle}">
@@ -213,7 +263,7 @@ export function sendWithoutReply() {
     if (!chat) return;
 
     if (!chat.messages) chat.messages = [];
-    chat.messages.push({ role: 'user', content });
+    chat.messages.push({ role: 'user', content, timestamp: Date.now() });
     chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
     input.value = '';
@@ -229,7 +279,7 @@ export async function sendMessage() {
 
     if (content) {
         if (!chat.messages) chat.messages = [];
-        chat.messages.push({ role: 'user', content });
+        chat.messages.push({ role: 'user', content, timestamp: Date.now() });
         chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
         input.value = '';
         renderChatMessages(chat);
@@ -587,7 +637,7 @@ export function sendSticker(url) {
     const content = `[sticker:${url}]`;
 
     if (!chat.messages) chat.messages = [];
-    chat.messages.push({ role: 'user', content });
+    chat.messages.push({ role: 'user', content, timestamp: Date.now() });
     chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
     renderChatMessages(chat);
@@ -599,15 +649,16 @@ export function sendSticker(url) {
 
 // Extract AI reply logic to reuse
 async function triggerAIReply(chat) {
-    const typingIndicator = document.getElementById('typing-indicator');
-    typingIndicator.style.display = 'block';
+    const headerTitle = document.getElementById('chat-header-title');
+    const originalTitle = chat.name;
+    headerTitle.textContent = '对方正在输入...';
 
     try {
         const responseText = await callAI(chat);
         const parts = responseText.split('|||');
 
         // Initial part is ready, hide initial loading
-        typingIndicator.style.display = 'none';
+        headerTitle.textContent = originalTitle;
 
         for (let i = 0; i < parts.length; i++) {
             const part = parts[i].trim();
@@ -615,16 +666,16 @@ async function triggerAIReply(chat) {
 
             // For subsequent messages, simulate typing delay
             if (i > 0) {
-                typingIndicator.style.display = 'block';
+                headerTitle.textContent = '对方正在输入...';
                 // Delay based on content length + random jitter (min 1s, max 3s)
                 const delay = 1000 + Math.random() * 1500;
                 await new Promise(r => setTimeout(r, delay));
-                typingIndicator.style.display = 'none';
+                headerTitle.textContent = originalTitle;
             }
 
             // Check if chat is still valid/current (simplified check)
             // In a real app we might check if user switched chats, but here we just push.
-            chat.messages.push({ role: 'assistant', content: part });
+            chat.messages.push({ role: 'assistant', content: part, timestamp: Date.now() });
             saveToLocalStorage();
             renderChatMessages(chat);
 
@@ -635,7 +686,7 @@ async function triggerAIReply(chat) {
 
     } catch (e) {
         console.error(e);
-        typingIndicator.style.display = 'none';
+        headerTitle.textContent = originalTitle;
         // Optional: show error message
     }
 
@@ -760,7 +811,7 @@ export function sendTransfer() {
     const content = `[transfer:${JSON.stringify(transferData)}]`;
 
     if (!chat.messages) chat.messages = [];
-    chat.messages.push({ role: 'user', content });
+    chat.messages.push({ role: 'user', content, timestamp: Date.now() });
     chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 
     renderChatMessages(chat);
