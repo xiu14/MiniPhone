@@ -102,6 +102,11 @@ export function initSettings() {
             openLocalBtn.style.display = 'none';
         }
     }
+
+    // DEBUG: Expose to window
+    window.saveToLocalFile = saveToLocalFile;
+    window.openLocalFile = openLocalFile;
+    console.log('Settings: Local File functions attached to window');
 }
 
 export function saveApiSettings() {
@@ -225,6 +230,11 @@ function exportData() {
 
 // New: Save to Local File (File System Access API)
 async function saveToLocalFile() {
+    const btn = document.getElementById('save-local-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '💾 正在调用系统保存...';
+    btn.disabled = true;
+
     try {
         const options = {
             suggestedName: `miniphone_data_${new Date().toISOString().slice(0, 10)}.json`,
@@ -242,13 +252,22 @@ async function saveToLocalFile() {
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
-            alert('保存失败: ' + err.message);
+            alert('保存失败，将尝试普通下载模式: ' + err.message);
+            // Fallback to Blob download
+            exportData();
         }
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
     }
 }
 
 // New: Open Local File
 async function openLocalFile() {
+    const btn = document.getElementById('open-local-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '📂 正在打开...';
+
     try {
         const [handle] = await window.showOpenFilePicker({
             types: [{
@@ -258,14 +277,14 @@ async function openLocalFile() {
             multiple: false
         });
         const file = await handle.getFile();
-        await processImportData(file, false); // false = don't use FileReader (already have file obj but need text)
-        // Actually handle.getFile() returns a File object which is a Blob.
-        // We can use file.text() directly.
+        await processImportData(file, false);
     } catch (err) {
         if (err.name !== 'AbortError') {
             console.error(err);
             alert('打开文件失败: ' + err.message);
         }
+    } finally {
+        btn.textContent = originalText;
     }
 }
 
