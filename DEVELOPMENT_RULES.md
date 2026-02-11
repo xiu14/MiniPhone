@@ -24,7 +24,7 @@ const CACHE_NAME = 'miniphone-v20'; // <--- 修改这里的数字
 ### (3) `index.html` (UI 版本显示)
 在"API设置 -> 关于"部分，修改显示的文本。
 ```html
-<span style="color:#888;">v20 (Secret Calc)</span>
+<span style="color:#888;">v43 (ImageMsg & Sticker Shuffle)</span>
 ```
 
 > ⚠️ **重要警告：绝对不要在 `main.js` 内部的 `import` 语句中添加 `?v=` 参数！**

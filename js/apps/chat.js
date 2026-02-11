@@ -218,7 +218,23 @@ export function renderChatMessages(chat) {
             <div class="voice-transcript">${voiceText}</div>`;
         }
 
-        if (!isTransfer && !isVoice) {
+        // Check if message is an image message
+        const imgMsgMatch = msg.content.match(/^\[imgmsg:(.*?)\]$/s);
+        let isImgMsg = false;
+        if (!isTransfer && !isVoice && imgMsgMatch) {
+            isImgMsg = true;
+            const imgText = imgMsgMatch[1];
+            contentHtml = `<div class="imgmsg-card ${isUser ? 'sent' : 'received'}">
+                <div class="imgmsg-body">
+                    <div class="imgmsg-text">${imgText.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+                </div>
+                <div class="imgmsg-footer">
+                    <span class="imgmsg-label">📷 图片消息</span>
+                </div>
+            </div>`;
+        }
+
+        if (!isTransfer && !isVoice && !isImgMsg) {
             // Basic HTML escape first to prevent XSS
             contentHtml = contentHtml.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -250,8 +266,8 @@ export function renderChatMessages(chat) {
         // Detect if message is ONLY a sticker (for bubble styling)
         const isSingleSticker = /^\[sticker:.*?\]$/.test(msg.content.trim());
 
-        const bubbleClass = isTransfer ? '' : isVoice ? 'message-voice' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
-        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : isVoice ? 'background:transparent;padding:0;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
+        const bubbleClass = isTransfer ? '' : isVoice ? 'message-voice' : isImgMsg ? 'message-imgmsg' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
+        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : isVoice ? 'background:transparent;padding:0;' : isImgMsg ? 'background:transparent;padding:0;max-width:240px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         return `
     ${timeDividerHtml}
@@ -868,6 +884,34 @@ export function sendVoiceMessage() {
     renderChatMessages(chat);
     saveToLocalStorage();
     document.getElementById('voice-modal').classList.remove('active');
+}
+
+// ========== Image Message ==========
+export function openImageMsgModal() {
+    document.getElementById('chat-dropdown-menu').classList.remove('active');
+    document.getElementById('imgmsg-text').value = '';
+    document.getElementById('imgmsg-modal').classList.add('active');
+}
+
+export function sendImageMessage() {
+    const text = document.getElementById('imgmsg-text').value.trim();
+    if (!text) {
+        alert('请输入图片文字内容');
+        return;
+    }
+
+    const chat = getCurrentChat();
+    if (!chat) return;
+
+    const content = `[imgmsg:${text}]`;
+
+    if (!chat.messages) chat.messages = [];
+    chat.messages.push({ role: 'user', content, timestamp: Date.now() });
+    chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+    renderChatMessages(chat);
+    saveToLocalStorage();
+    document.getElementById('imgmsg-modal').classList.remove('active');
 }
 
 window.showTransferActionSheet = function (msgIndex) {

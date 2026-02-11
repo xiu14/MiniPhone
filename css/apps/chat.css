@@ -542,6 +542,100 @@
 }
 
 
+/* ========== 图片消息 ========== */
+.message-imgmsg {
+    max-width: 240px;
+}
+
+.message-row.received .message-imgmsg {
+    margin-left: 10px;
+}
+
+.message-row.sent .message-imgmsg {
+    margin-right: 10px;
+}
+
+.imgmsg-card {
+    width: 220px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
+    animation: fadeIn 0.2s ease;
+}
+
+.imgmsg-card.sent {
+    border: 2px solid #95ec69;
+}
+
+.imgmsg-card.received {
+    border: 2px solid #e0e0e0;
+}
+
+.imgmsg-body {
+    background: linear-gradient(145deg, #e8f0fe, #d4e4fc);
+    padding: 20px 16px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.imgmsg-body::before {
+    content: '';
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.imgmsg-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #1a1a2e;
+    text-align: center;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    font-weight: 500;
+}
+
+.imgmsg-footer {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 6px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.imgmsg-label {
+    font-size: 11px;
+    color: #888;
+}
+
+/* dark mode 图片消息 */
+.dark-mode .imgmsg-body {
+    background: linear-gradient(145deg, #2a2d3e, #1e2030);
+}
+
+.dark-mode .imgmsg-text {
+    color: #e0e0e0;
+}
+
+.dark-mode .imgmsg-card.received {
+    border-color: #444;
+}
+
+.dark-mode .imgmsg-footer {
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.dark-mode .imgmsg-label {
+    color: #777;
+}
+
 /* ========== 表情按钮 ========== */
 #emoji-btn {
     width: 44px;

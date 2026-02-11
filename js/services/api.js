@@ -34,14 +34,19 @@ export async function callAI(chat, systemPromptOverride = null) {
         }
     }
 
-    // Build sticker info for AI
+    // Build sticker info for AI (randomized selection)
     let stickerInfo = '';
     if (state.stickerPacks && state.stickerPacks.length > 0) {
         const allStickers = state.stickerPacks.flatMap(pack =>
             pack.stickers.map(s => `[sticker:${s.url}] (${s.name})`)
         );
         if (allStickers.length > 0) {
-            stickerInfo = `\n\n你可以在回复中使用以下表情包（直接使用对应的标签即可）：\n${allStickers.slice(0, 20).join('\n')}`;
+            // Fisher-Yates shuffle to randomize sticker order
+            for (let i = allStickers.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allStickers[i], allStickers[j]] = [allStickers[j], allStickers[i]];
+            }
+            stickerInfo = `\n\n你可以在回复中使用以下表情包（直接使用对应的标签即可，随机挑选使用，不要总用同样的）：\n${allStickers.slice(0, 20).join('\n')}`;
         }
     }
 

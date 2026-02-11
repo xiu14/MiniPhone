@@ -10,7 +10,8 @@ import {
     initEmojiPanel, toggleEmojiPanel, insertEmoji,
     generateSummary, openSummaryApp, openSummaryDetail,
     toggleChatMenu, openTransferModal, sendTransfer,
-    openVoiceModal, sendVoiceMessage
+    openVoiceModal, sendVoiceMessage,
+    openImageMsgModal, sendImageMessage
 } from './apps/chat.js';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
@@ -101,6 +102,8 @@ window.openTransferModal = openTransferModal;
 window.sendTransfer = sendTransfer;
 window.openVoiceModal = openVoiceModal;
 window.sendVoiceMessage = sendVoiceMessage;
+window.openImageMsgModal = openImageMsgModal;
+window.sendImageMessage = sendImageMessage;
 
 // Character
 window.openCharacterSelector = openCharacterSelector;
@@ -219,6 +222,11 @@ function bindGlobalListeners() {
         document.getElementById('transfer-modal').classList.remove('active');
     });
     document.getElementById('confirm-transfer-btn').addEventListener('click', sendTransfer);
+    document.getElementById('menu-imgmsg').addEventListener('click', openImageMsgModal);
+    document.getElementById('cancel-imgmsg-btn').addEventListener('click', () => {
+        document.getElementById('imgmsg-modal').classList.remove('active');
+    });
+    document.getElementById('confirm-imgmsg-btn').addEventListener('click', sendImageMessage);
     document.getElementById('cancel-chat-settings-btn').addEventListener('click', () => {
         document.getElementById('chat-settings-modal').classList.remove('active');
     });
