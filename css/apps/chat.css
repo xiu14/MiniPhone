@@ -636,6 +636,55 @@
     color: #777;
 }
 
+/* ========== TTS 朗读按钮 ========== */
+.msg-with-tts {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 75%;
+}
+
+.message-row.sent .msg-with-tts {
+    align-items: flex-end;
+}
+
+.tts-btn {
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0.4;
+    padding: 2px 4px;
+    margin-top: 2px;
+    transition: opacity 0.2s, transform 0.15s;
+    user-select: none;
+}
+
+.tts-btn:hover {
+    opacity: 0.8;
+    transform: scale(1.2);
+}
+
+.tts-btn.tts-loading {
+    opacity: 0.6;
+    animation: tts-pulse 1s infinite;
+}
+
+.tts-btn.tts-playing {
+    opacity: 1;
+    color: #ff6d00;
+}
+
+@keyframes tts-pulse {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 0.9;
+    }
+}
+
 /* ========== 表情按钮 ========== */
 #emoji-btn {
     width: 44px;

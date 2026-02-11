@@ -13,6 +13,7 @@ import {
     openVoiceModal, sendVoiceMessage,
     openImageMsgModal, sendImageMessage
 } from './apps/chat.js';
+import { playTTS } from './services/tts.js';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
     commentOnMoment, showReplyInput, focusCommentInput
@@ -104,6 +105,7 @@ window.openVoiceModal = openVoiceModal;
 window.sendVoiceMessage = sendVoiceMessage;
 window.openImageMsgModal = openImageMsgModal;
 window.sendImageMessage = sendImageMessage;
+window.playTTS = playTTS;
 
 // Character
 window.openCharacterSelector = openCharacterSelector;

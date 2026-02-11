@@ -13,7 +13,12 @@ export const state = {
         model: 'gpt-4o-mini',
         userName: '用户',
         userBio: '',
-        userAvatar: ''
+        userAvatar: '',
+        ttsProxyUrl: '',
+        ttsAppId: '',
+        ttsToken: '',
+        ttsVoiceId: '',
+        ttsCluster: 'volcano_tts'
     },
     stickerPacks: [] // { id, name, stickers: [] }
 };

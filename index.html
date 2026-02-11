@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=43">
+    <link rel="stylesheet" href="css/main.css?v=44">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=43');
+            await import('./js/main.js?v=44');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -595,6 +595,38 @@
                     <textarea id="user-bio-input" rows="3" placeholder="告诉AI关于你的信息（职业、爱好等），让回复更贴合..."></textarea>
                 </div>
 
+                <hr>
+
+                <h3>TTS 语音设置</h3>
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:12px;">
+                    配置火山引擎语音合成，为消息添加朗读功能。需要部署 TTS 代理服务。
+                </div>
+                <div class="form-group">
+                    <label>TTS 代理地址</label>
+                    <input type="text" id="tts-proxy-url" placeholder="例如: https://ttss.zeabur.app">
+                </div>
+                <div class="form-group">
+                    <label>AppID</label>
+                    <input type="text" id="tts-appid" placeholder="火山引擎 AppID">
+                </div>
+                <div class="form-group">
+                    <label>Token</label>
+                    <input type="password" id="tts-token" placeholder="火山引擎 Access Token">
+                </div>
+                <div class="form-group">
+                    <label>Voice ID</label>
+                    <input type="text" id="tts-voice-id" placeholder="S_xxx（训练好的音色ID）">
+                </div>
+                <div class="form-group">
+                    <label>Cluster</label>
+                    <select id="tts-cluster">
+                        <option value="volcano_tts">volcano_tts（S_开头ID选这个）</option>
+                        <option value="volcano_icl">volcano_icl（即时复刻）</option>
+                    </select>
+                </div>
+                <button class="form-button" id="test-tts-btn" style="background:#ff6d00;margin-bottom:8px;">🔊
+                    测试语音</button>
+
                 <button class="form-button save-btn" id="save-api-settings-btn">保存设置</button>
 
                 <hr style="margin: 30px 0;">
@@ -619,7 +651,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v43 (ImageMsg & Sticker Shuffle)</span>
+                        <span style="color:#888;">v44 (TTS Voice Playback)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

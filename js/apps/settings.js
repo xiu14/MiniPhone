@@ -3,6 +3,7 @@ import { state, saveToLocalStorage, clearLegacyStorage } from '../core/storage.j
 import { db } from '../core/db.js';
 import { fetchModels } from '../services/api.js';
 import { handleAvatarUpload } from '../core/utils.js';
+import { testTTS } from '../services/tts.js';
 
 export function initSettings() {
     // Bind events
@@ -16,6 +17,15 @@ export function initSettings() {
     if (document.getElementById('api-key')) document.getElementById('api-key').value = settings.apiKey || '';
     if (document.getElementById('user-name-input')) document.getElementById('user-name-input').value = settings.userName || '用户';
     if (document.getElementById('user-bio-input')) document.getElementById('user-bio-input').value = settings.userBio || '';
+
+    // TTS settings
+    if (document.getElementById('tts-proxy-url')) document.getElementById('tts-proxy-url').value = settings.ttsProxyUrl || '';
+    if (document.getElementById('tts-appid')) document.getElementById('tts-appid').value = settings.ttsAppId || '';
+    if (document.getElementById('tts-token')) document.getElementById('tts-token').value = settings.ttsToken || '';
+    if (document.getElementById('tts-voice-id')) document.getElementById('tts-voice-id').value = settings.ttsVoiceId || '';
+    if (document.getElementById('tts-cluster')) document.getElementById('tts-cluster').value = settings.ttsCluster || 'volcano_tts';
+    const testTtsBtn = document.getElementById('test-tts-btn');
+    if (testTtsBtn) testTtsBtn.addEventListener('click', testTTS);
 
     // Fix model select
     const modelSelect = document.getElementById('model-select');
@@ -90,6 +100,13 @@ export function saveApiSettings() {
         uAvatar = uPreview.src;
     }
     settings.userAvatar = uAvatar;
+
+    // TTS settings
+    settings.ttsProxyUrl = document.getElementById('tts-proxy-url').value.trim();
+    settings.ttsAppId = document.getElementById('tts-appid').value.trim();
+    settings.ttsToken = document.getElementById('tts-token').value.trim();
+    settings.ttsVoiceId = document.getElementById('tts-voice-id').value.trim();
+    settings.ttsCluster = document.getElementById('tts-cluster').value;
 
     saveToLocalStorage();
     alert('设置已保存');
