@@ -234,23 +234,30 @@ export function renderChatMessages(chat) {
             </div>`;
         }
 
-        // Check if message is a call log
-        const callMatch = msg.content.match(/^\[call:(\d{2}:\d{2}):(.+)\]$/s);
+        // Check if message is a call log: [call:MM:SS:jsonData]
         let isCall = false;
-        if (!isTransfer && !isVoice && !isImgMsg && callMatch) {
-            isCall = true;
-            const callDuration = callMatch[1];
-            const callData = callMatch[2];
-            // Escape the JSON data for HTML attribute
-            const escapedData = callData.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-            contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
-                <div class="call-log-icon">📞</div>
-                <div class="call-log-info">
-                    <div class="call-log-label">语音通话</div>
-                    <div class="call-log-duration">时长 ${callDuration}</div>
-                </div>
-                <div class="call-log-arrow">›</div>
-            </div>`;
+        if (!isTransfer && !isVoice && !isImgMsg && msg.content.startsWith('[call:') && msg.content.endsWith(']')) {
+            // Extract duration (format: [call:MM:SS:...)
+            const firstColon = 5; // after "[call"
+            const durationEnd = msg.content.indexOf(':', firstColon + 1);
+            if (durationEnd > 0) {
+                const secondColon = msg.content.indexOf(':', durationEnd + 1);
+                if (secondColon > 0) {
+                    const callDuration = msg.content.substring(firstColon + 1, secondColon);
+                    const callData = msg.content.substring(secondColon + 1, msg.content.length - 1);
+                    if (/^\d{2}:\d{2}$/.test(callDuration) && callData.startsWith('[')) {
+                        isCall = true;
+                        contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
+                            <div class="call-log-icon">📞</div>
+                            <div class="call-log-info">
+                                <div class="call-log-label">语音通话</div>
+                                <div class="call-log-duration">时长 ${callDuration}</div>
+                            </div>
+                            <div class="call-log-arrow">›</div>
+                        </div>`;
+                    }
+                }
+            }
         }
 
         if (!isTransfer && !isVoice && !isImgMsg && !isCall) {
