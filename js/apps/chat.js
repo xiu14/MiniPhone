@@ -291,12 +291,17 @@ export function renderChatMessages(chat) {
     ${timeDividerHtml}
     <div class="message-row ${isUser ? 'sent' : 'received'}" data-msg-index="${msgIndex}">
       ${!isUser ? avatarHtml : ''}
-      <div class="msg-with-tts">
-        <div class="${bubbleClass}" style="${bubbleStyle}">
-          ${contentHtml}
-        </div>
-        ${ttsButtonHtml}
-      </div>
+      ${ttsButtonHtml ?
+                `<div class="msg-with-tts">
+            <div class="${bubbleClass}" style="${bubbleStyle}">
+                ${contentHtml}
+            </div>
+            ${ttsButtonHtml}
+        </div>` :
+                `<div class="${bubbleClass}" style="${bubbleStyle}">
+            ${contentHtml}
+        </div>`
+            }
       ${isUser ? avatarHtml : ''}
     </div>
   `;
