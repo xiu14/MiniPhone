@@ -236,36 +236,26 @@ export function renderChatMessages(chat) {
 
         // Check if message is a call log: [call:MM:SS:jsonData]
         let isCall = false;
-        // Check startsWith only
         if (!isTransfer && !isVoice && !isImgMsg && msg.content.trim().startsWith('[call:')) {
-            const content = msg.content.trim();
-            // Find first two colons
-            const firstColon = content.indexOf(':');
-            if (firstColon > 0) {
-                const durationEnd = content.indexOf(':', firstColon + 1);
-                if (durationEnd > 0) {
-                    const callDuration = content.substring(firstColon + 1, durationEnd).trim();
-                    // Find start of JSON array
-                    const jsonStart = content.indexOf('[', durationEnd);
-                    if (jsonStart > durationEnd && /^\d{2}:\d{2}$/.test(callDuration)) {
-                        // Find end of JSON array (last ']')
-                        const jsonEnd = content.lastIndexOf(']');
-                        if (jsonEnd > jsonStart) {
-                            const callData = content.substring(jsonStart, jsonEnd + 1);
-                            // Simple validation: it looks like a JSON array
-                            if (callData.startsWith('[') && callData.endsWith(']')) {
-                                isCall = true;
-                                contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
-                                    <div class="call-log-icon">📞</div>
-                                    <div class="call-log-info">
-                                        <div class="call-log-label">语音通话</div>
-                                        <div class="call-log-duration">时长 ${callDuration}</div>
-                                    </div>
-                                    <div class="call-log-arrow">›</div>
-                                </div>`;
-                            }
-                        }
-                    }
+            // Regex to match [call:duration:data] allowing newlines
+            const match = msg.content.trim().match(/^\[call:(\d{2}:\d{2}):([\s\S]*)\]$/);
+            if (match) {
+                const callDuration = match[1];
+                const callDataRaw = match[2]; // This is the JSON string
+
+                // Validate it looks like JSON
+                if (callDataRaw.trim().startsWith('[') && callDataRaw.trim().endsWith(']')) {
+                    isCall = true;
+                    // Pass ENCODED string to avoid quoting hell in HTML attribute
+                    const encodedData = encodeURIComponent(callDataRaw);
+                    contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', '${encodedData}')">
+                        <div class="call-log-icon">📞</div>
+                        <div class="call-log-info">
+                            <div class="call-log-label">语音通话</div>
+                            <div class="call-log-duration">时长 ${callDuration}</div>
+                        </div>
+                        <div class="call-log-arrow">›</div>
+                    </div>`;
                 }
             }
         }

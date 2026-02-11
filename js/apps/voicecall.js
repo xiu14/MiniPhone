@@ -227,9 +227,19 @@ export function endVoiceCall() {
 }
 
 // ========== Show Call Log Modal (called from chat message click) ========== //
-export function showCallLog(duration, callLogJson) {
+export function showCallLog(duration, callLogInput) {
     try {
-        const messages = JSON.parse(callLogJson);
+        let jsonStr = callLogInput;
+        // Check if input needs decoding (if it doesn't start with '[', it's likely encoded)
+        if (typeof callLogInput === 'string' && !callLogInput.trim().startsWith('[')) {
+            try {
+                jsonStr = decodeURIComponent(callLogInput);
+            } catch (e) {
+                console.warn('showCallLog: decodeURIComponent failed', e);
+            }
+        }
+
+        const messages = JSON.parse(jsonStr);
         const modal = document.getElementById('call-log-modal');
         const title = document.getElementById('call-log-title');
         const body = document.getElementById('call-log-body');
