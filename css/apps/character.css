@@ -464,7 +464,6 @@
     position: relative;
     background: #222;
     border-radius: 8px;
-    overflow: hidden;
     min-height: 120px;
     cursor: pointer;
     border: 1px solid #333;
