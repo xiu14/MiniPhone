@@ -483,3 +483,12 @@
     max-width: 260px;
     box-shadow: none !important;
 }
+
+/* Add margin to separate from avatar */
+.message-row.received .message-call {
+    margin-left: 10px;
+}
+
+.message-row.sent .message-call {
+    margin-right: 10px;
+}
