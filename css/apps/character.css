@@ -66,6 +66,10 @@
 }
 
 /* ========== 角色手机界面 ========== */
+#character-phone-screen {
+    position: relative;
+}
+
 .char-screen {
     display: none;
     flex-direction: column;
@@ -524,4 +528,29 @@
     right: 5px;
     font-size: 10px;
     color: #666;
+}
+
+/* ========== iOS 底部手势条 (Home Indicator) ========== */
+.char-home-indicator {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 100px;
+    cursor: pointer;
+    z-index: 999;
+    transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+.char-home-indicator:hover {
+    width: 150px;
+    opacity: 0.8;
+}
+
+.char-home-indicator:active {
+    width: 100px;
+    opacity: 0.5;
 }

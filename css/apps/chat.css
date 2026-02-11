@@ -431,6 +431,116 @@
     animation: fadeIn 0.2s ease;
 }
 
+/* 表情包与头像的间距 */
+.message-row.received .message-sticker {
+    margin-left: 10px;
+}
+
+.message-row.sent .message-sticker {
+    margin-right: 10px;
+}
+
+/* ========== 语音消息 ========== */
+.message-voice {
+    max-width: 260px;
+}
+
+.message-row.received .message-voice {
+    margin-left: 10px;
+}
+
+.message-row.sent .message-voice {
+    margin-right: 10px;
+}
+
+.voice-bubble {
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    min-width: 80px;
+    transition: opacity 0.15s;
+}
+
+.voice-bubble:active {
+    opacity: 0.7;
+}
+
+.voice-bubble.sent {
+    background: #95ec69;
+    border-top-right-radius: 2px;
+}
+
+.voice-bubble.received {
+    background: #fff;
+    border-top-left-radius: 2px;
+}
+
+.voice-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.voice-icon {
+    font-size: 16px;
+}
+
+.voice-waves {
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: #666;
+    animation: voicePlay 1.2s infinite;
+    opacity: 0.7;
+}
+
+.voice-bubble.sent .voice-waves {
+    color: #2d7a2d;
+}
+
+.voice-duration {
+    font-size: 12px;
+    color: #888;
+    margin-left: auto;
+}
+
+.voice-bubble.sent .voice-duration {
+    color: #3d8a3d;
+}
+
+.voice-transcript {
+    font-size: 12px;
+    color: var(--text-secondary, #888);
+    margin-top: 4px;
+    padding: 4px 8px;
+    border-left: 2px solid rgba(150, 150, 150, 0.3);
+    line-height: 1.4;
+}
+
+@keyframes voicePlay {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* dark mode 语音 */
+.dark-mode .voice-bubble.received {
+    background: #2a2a2a;
+}
+
+.dark-mode .voice-bubble.received .voice-waves {
+    color: #aaa;
+}
+
+.dark-mode .voice-bubble.received .voice-duration {
+    color: #aaa;
+}
+
 
 /* ========== 表情按钮 ========== */
 #emoji-btn {

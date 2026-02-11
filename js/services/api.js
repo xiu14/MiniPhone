@@ -57,7 +57,7 @@ export async function callAI(chat, systemPromptOverride = null) {
     const globalPrompt = settings.globalSystemPrompt !== undefined ? settings.globalSystemPrompt : DEFAULT_WECHAT_PROMPT;
 
     const now = new Date();
-    const timeStr = now.toLocaleString('zh-CN', { year:'numeric', month:'long', day:'numeric', weekday:'long', hour:'2-digit', minute:'2-digit', hour12: false });
+    const timeStr = now.toLocaleString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long', hour: '2-digit', minute: '2-digit', hour12: false });
 
     const systemPrompt = systemPromptOverride || `你现在扮演 "${chat.name}"。${chat.persona || ''}
 用户的名字是 "${settings.userName}"。
@@ -82,6 +82,15 @@ ${globalPrompt}
 - 转账消息必须单独一条，不要和其他文字混在一起
 - 只在剧情需要时发起转账，不要频繁使用
 - 金额要符合剧情背景，合理自然${stickerInfo}
+
+【语音消息】
+你可以发送语音消息，格式为：[voice:语音内容:时长秒数]
+例如：[voice:宝贝你在干嘛呀，我好想你哦:5]
+注意事项：
+- 语音会显示为语音条，下面会显示"转文字"内容
+- 时长根据内容长度设定，大约每3个字1秒
+- 语音内容要口语化、自然，就像真的在说话
+- 不要每次都用，偶尔穿插使用更自然
 
 【消息分段】
 如果你想连续发送多条消息（例如先发一句，再发一个表情，或分段说话），请使用分隔符 "|||" 将内容隔开。

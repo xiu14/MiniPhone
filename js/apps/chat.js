@@ -200,8 +200,25 @@ export function renderChatMessages(chat) {
                 contentHtml = '[转账消息解析失败]';
             }
         }
+        // Check if message is a voice message
+        const voiceMatch = msg.content.match(/^\[voice:(.*?):(\d+)\]$/);
+        let isVoice = false;
+        if (!isTransfer && voiceMatch) {
+            isVoice = true;
+            const voiceText = voiceMatch[1];
+            const duration = parseInt(voiceMatch[2]);
+            const barWidth = Math.min(60 + duration * 8, 220);
+            contentHtml = `<div class="voice-bubble ${isUser ? 'sent' : 'received'}" style="width:${barWidth}px">
+                <div class="voice-bar">
+                    <span class="voice-icon">${isUser ? '🔊' : '🔈'}</span>
+                    <span class="voice-waves">|||</span>
+                    <span class="voice-duration">${duration}"</span>
+                </div>
+            </div>
+            <div class="voice-transcript">${voiceText}</div>`;
+        }
 
-        if (!isTransfer) {
+        if (!isTransfer && !isVoice) {
             // Basic HTML escape first to prevent XSS
             contentHtml = contentHtml.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
@@ -233,8 +250,8 @@ export function renderChatMessages(chat) {
         // Detect if message is ONLY a sticker (for bubble styling)
         const isSingleSticker = /^\[sticker:.*?\]$/.test(msg.content.trim());
 
-        const bubbleClass = isTransfer ? '' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
-        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
+        const bubbleClass = isTransfer ? '' : isVoice ? 'message-voice' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
+        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : isVoice ? 'background:transparent;padding:0;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         return `
     ${timeDividerHtml}
@@ -821,6 +838,36 @@ export function sendTransfer() {
     document.getElementById('transfer-modal').classList.remove('active');
 
     // Do NOT trigger AI reply — user must press ✋ button
+}
+
+// ========== Voice Message ==========
+export function openVoiceModal() {
+    document.getElementById('chat-dropdown-menu').classList.remove('active');
+    document.getElementById('voice-text').value = '';
+    document.getElementById('voice-modal').classList.add('active');
+}
+
+export function sendVoiceMessage() {
+    const text = document.getElementById('voice-text').value.trim();
+    if (!text) {
+        alert('请输入语音内容');
+        return;
+    }
+
+    const chat = getCurrentChat();
+    if (!chat) return;
+
+    // 根据文字长度模拟语音时长（每3个字约1秒，最少2秒，最多60秒）
+    const duration = Math.max(2, Math.min(60, Math.ceil(text.length / 3)));
+    const content = `[voice:${text}:${duration}]`;
+
+    if (!chat.messages) chat.messages = [];
+    chat.messages.push({ role: 'user', content, timestamp: Date.now() });
+    chat.lastTime = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+    renderChatMessages(chat);
+    saveToLocalStorage();
+    document.getElementById('voice-modal').classList.remove('active');
 }
 
 window.showTransferActionSheet = function (msgIndex) {

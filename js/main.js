@@ -9,7 +9,8 @@ import {
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
     initEmojiPanel, toggleEmojiPanel, insertEmoji,
     generateSummary, openSummaryApp, openSummaryDetail,
-    toggleChatMenu, openTransferModal, sendTransfer
+    toggleChatMenu, openTransferModal, sendTransfer,
+    openVoiceModal, sendVoiceMessage
 } from './apps/chat.js';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
@@ -54,6 +55,18 @@ if (document.readyState === 'loading') {
 window.showScreen = showScreen;
 window.switchToCharHomeScreen = switchToCharHomeScreen;
 window.switchToMyPhone = switchToMyPhone;
+
+// CPhone 底部手势条：子应用→桌面，桌面→退出
+window.charHomeBarAction = () => {
+    const homeScreen = document.getElementById('char-home-screen');
+    if (homeScreen.classList.contains('active')) {
+        // 已经在桌面，退出 CPhone
+        switchToMyPhone();
+    } else {
+        // 在子应用中，返回桌面
+        switchToCharHomeScreen();
+    }
+};
 window.openChatList = () => {
     renderChatList();
     showScreen('chat-list-screen');
@@ -82,10 +95,12 @@ window.openSummaryApp = openSummaryApp;
 window.openSummaryDetail = openSummaryDetail;
 window.openGlobalPromptSettings = openGlobalPromptSettings;
 
-// Transfer
+// Transfer & Voice
 window.toggleChatMenu = toggleChatMenu;
 window.openTransferModal = openTransferModal;
 window.sendTransfer = sendTransfer;
+window.openVoiceModal = openVoiceModal;
+window.sendVoiceMessage = sendVoiceMessage;
 
 // Character
 window.openCharacterSelector = openCharacterSelector;
@@ -195,6 +210,11 @@ function bindGlobalListeners() {
         openChatSettings();
     });
     document.getElementById('menu-transfer').addEventListener('click', openTransferModal);
+    document.getElementById('menu-voice').addEventListener('click', openVoiceModal);
+    document.getElementById('cancel-voice-btn').addEventListener('click', () => {
+        document.getElementById('voice-modal').classList.remove('active');
+    });
+    document.getElementById('confirm-voice-btn').addEventListener('click', sendVoiceMessage);
     document.getElementById('cancel-transfer-btn').addEventListener('click', () => {
         document.getElementById('transfer-modal').classList.remove('active');
     });

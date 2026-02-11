@@ -21,6 +21,17 @@ function safeParseJSON(text) {
     return null;
 }
 
+// 获取角色的聊天记录上下文（用于 CPhone 内容生成）
+function getChatContext(charName) {
+    const chat = state.chats.find(c => c.name === charName);
+    if (!chat || !chat.messages || chat.messages.length === 0) return '';
+    const recent = chat.messages.slice(-15).map(m => {
+        const who = m.role === 'user' ? (state.settings.userName || '用户') : charName;
+        const text = m.content.substring(0, 60).replace(/\[sticker:.*?\]/g, '[表情]').replace(/\[transfer:.*?\]/g, '[转账]');
+        return `${who}: ${text}`;
+    }).join('\n');
+    return `\n\n【参考聊天记录】以下是角色与用户的最近对话，请适当结合这些内容来生成更贴合当前剧情的结果：\n${recent}`;
+}
 
 export function openCharacterSelector() {
     renderCharacterGrid();
@@ -204,7 +215,8 @@ export async function regenerateCharQQ() {
     const btn = document.getElementById('regenerate-char-qq-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。${chatCtx}
 只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "联系人", "preview": "最后一条消息", "time": "时间"}]`;
 
     const result = await generateCharContent(prompt);
@@ -244,7 +256,8 @@ export async function regenerateCharAlbum() {
     const btn = document.getElementById('regenerate-char-album-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"生成6张相册照片描述。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成6张相册照片描述。${chatCtx}
 只返回JSON数组，不要任何 markdown 标记或解释: [{"desc": "照片描述"}]`;
 
     const result = await generateCharContent(prompt);
@@ -285,7 +298,8 @@ export async function regenerateCharMemo() {
     const btn = document.getElementById('regenerate-char-memo-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"生成3-4条备忘录。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成3-4条备忘录。${chatCtx}
 只返回JSON数组，不要任何 markdown 标记或解释: [{"title": "标题", "content": "内容"}]`;
 
     const result = await generateCharContent(prompt);
@@ -325,7 +339,8 @@ export async function regenerateCharBrowser() {
     const btn = document.getElementById('regenerate-char-browser-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成浏览器访问历史和推荐网站（6-8个）。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成浏览器访问历史和推荐网站（6-8个）。${chatCtx}
 只返回JSON数组，不要任何 markdown 标记或解释: [{"title": "网站标题", "url": "虚构的网址", "desc": "简短描述"}]`;
 
     const result = await generateCharContent(prompt);
@@ -370,7 +385,8 @@ export async function regenerateCharSMS() {
     const btn = document.getElementById('regenerate-char-sms-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。${chatCtx}
 只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "发件人", "preview": "短信内容预览", "time": "时间"}]`;
 
     const result = await generateCharContent(prompt);
@@ -430,7 +446,8 @@ export async function regenerateCharX() {
     const btn = document.getElementById('regenerate-char-x-btn');
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X (Twitter) 首页私密推文（3-4条）。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成其 X (Twitter) 首页私密推文（3-4条）。${chatCtx}
     
 要求：
 1. 内容必须**深度反映**角色的性癖、私密欲望和不为人知的一面（NSFW/R18G/亚文化）。
@@ -465,17 +482,17 @@ export function renderCharCalculator() {
         if (val === 'C') {
             calcValue = '0';
         } else if (val === '±') {
-             if (calcValue !== '0') {
-                 if (calcValue.startsWith('-')) calcValue = calcValue.substring(1);
-                 else calcValue = '-' + calcValue;
-             }
+            if (calcValue !== '0') {
+                if (calcValue.startsWith('-')) calcValue = calcValue.substring(1);
+                else calcValue = '-' + calcValue;
+            }
         } else if (val === '=') {
             if (calcValue === '1069') {
                 // Unlock Secret Gallery
                 const screen = document.getElementById('char-calculator-screen');
-                if(screen) screen.classList.remove('active');
+                if (screen) screen.classList.remove('active');
                 const secret = document.getElementById('char-secret-gallery-screen');
-                if(secret) secret.classList.add('active');
+                if (secret) secret.classList.add('active');
                 renderCharSecretGallery();
                 calcValue = '0';
                 return;
@@ -492,8 +509,8 @@ export function renderCharCalculator() {
             } catch (e) {
                 calcValue = 'Error';
             }
-        } else if (['+','-','*','/','%'].includes(val)) {
-             calcValue += val;
+        } else if (['+', '-', '*', '/', '%'].includes(val)) {
+            calcValue += val;
         } else {
             if (calcValue === '0' && val !== '.') calcValue = val;
             else calcValue += val;
@@ -538,7 +555,8 @@ export async function regenerateCharSecretGallery() {
     const originalText = btn.textContent;
     btn.textContent = '⏳';
 
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成私密相册内容（4-6张）。
+    const chatCtx = getChatContext(char.name);
+    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设: ${char.persona}）生成私密相册内容（4-6张）。${chatCtx}
     
 场景设置：这是角色手机里的隐藏相册（Privately Locked Gallery）。
 内容要求：
