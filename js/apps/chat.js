@@ -292,8 +292,8 @@ export function renderChatMessages(chat) {
         // Detect if message is ONLY a sticker (for bubble styling)
         const isSingleSticker = /^\[sticker:.*?\]$/.test(msg.content.trim());
 
-        const bubbleClass = isTransfer ? '' : isVoice ? 'message-voice' : isImgMsg ? 'message-imgmsg' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
-        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : isVoice ? 'background:transparent;padding:0;' : isImgMsg ? 'background:transparent;padding:0;max-width:240px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
+        const bubbleClass = isTransfer ? '' : isCall ? 'message-call' : isVoice ? 'message-voice' : isImgMsg ? 'message-imgmsg' : (isSingleSticker ? 'message-sticker' : ('message ' + (isUser ? 'sent' : 'received')));
+        const bubbleStyle = isTransfer ? 'background:transparent;padding:0;max-width:260px;' : isCall ? 'background:transparent;padding:0;max-width:260px;' : isVoice ? 'background:transparent;padding:0;' : isImgMsg ? 'background:transparent;padding:0;max-width:240px;' : (isSingleSticker ? 'background:transparent;padding:0;max-width:150px;' : '');
 
         // TTS button for non-user messages (only if TTS is configured)
         let ttsButtonHtml = '';
@@ -303,7 +303,7 @@ export function renderChatMessages(chat) {
                 ttsText = voiceMatch[1];
             } else if (isImgMsg && imgMsgMatch) {
                 ttsText = imgMsgMatch[1];
-            } else if (!isTransfer) {
+            } else if (!isTransfer && !isCall) {
                 // Plain text: strip sticker tags
                 ttsText = msg.content.replace(/\[sticker:.*?\]/g, '').trim();
             }
