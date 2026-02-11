@@ -2,7 +2,6 @@
 import { state } from '../core/storage.js';
 
 // Simple in-memory audio cache: text -> base64
-// Simple in-memory audio cache: text -> base64
 const audioCache = new Map();
 let currentAudio = null;
 let currentBtn = null;
@@ -47,7 +46,8 @@ export async function playTTS(text, btnEl) {
     // Check cache
     const cacheKey = text.substring(0, 200);
     if (audioCache.has(cacheKey)) {
-        playBase64Audio(audioCache.get(cacheKey), btnEl);
+        // console.log("Playing from cache:", cacheKey);
+        playBase64Audio(audioCache.get(cacheKey), btnEl, cacheKey);
         return;
     }
 
@@ -74,7 +74,7 @@ export async function playTTS(text, btnEl) {
 
         if (data.success && data.audio_base64) {
             audioCache.set(cacheKey, data.audio_base64);
-            playBase64Audio(data.audio_base64, btnEl);
+            playBase64Audio(data.audio_base64, btnEl, cacheKey);
         } else {
             console.error('TTS failed:', data.message);
             alert('语音合成失败: ' + JSON.stringify(data.message || '未知错误'));
@@ -96,8 +96,17 @@ function resetButton(btn) {
     // Note: We do NOT remove onclick because we didn't add it dynamically
 }
 
-function playBase64Audio(base64, btnEl) {
-    const audio = new Audio('data:audio/mp3;base64,' + base64);
+function playBase64Audio(base64, btnEl, cacheKey) {
+    let audio;
+    try {
+        audio = new Audio('data:audio/mp3;base64,' + base64);
+    } catch (e) {
+        alert("Audio creation failed: " + e.message);
+        if (cacheKey) audioCache.delete(cacheKey);
+        resetButton(btnEl);
+        return;
+    }
+
     currentAudio = audio;
     currentBtn = btnEl;
 
@@ -111,7 +120,9 @@ function playBase64Audio(base64, btnEl) {
         currentBtn = null;
     };
 
-    audio.onerror = () => {
+    audio.onerror = (e) => {
+        console.error("Audio error:", e);
+        if (cacheKey) audioCache.delete(cacheKey);
         resetButton(btnEl);
         currentAudio = null;
         currentBtn = null;
@@ -119,6 +130,9 @@ function playBase64Audio(base64, btnEl) {
 
     audio.play().catch(e => {
         console.error('Audio play failed:', e);
+        // If play fails, it might be interaction policy or corrupt data.
+        // Clear cache just in case.
+        if (cacheKey) audioCache.delete(cacheKey);
         resetButton(btnEl);
         currentAudio = null;
         currentBtn = null;
