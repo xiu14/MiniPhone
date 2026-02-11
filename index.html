@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=54">
+    <link rel="stylesheet" href="css/main.css?v=55">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=54');
+            await import('./js/main.js?v=55');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -633,10 +633,20 @@
 
                 <h3>数据管理</h3>
                 <div class="form-group">
-                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">包含所有聊天记录、角色、自定义表情包及设置
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">
+                        本地文件直读写 (推荐 PC 端使用，数据保存在硬盘):
+                    </div>
+                    <button class="form-button" id="save-local-btn"
+                        style="background:var(--accent-color); margin-bottom: 8px;">💾
+                        另存为本地文件</button>
+                    <button class="form-button" id="open-local-btn"
+                        style="background:var(--bg-tertiary); margin-bottom: 20px;">📂
+                        打开本地文件</button>
+
+                    <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">旧版浏览器备份 (下载/上传 JSON):
                     </div>
                     <button class="form-button" id="export-data-btn" style="background:var(--bg-tertiary);">⬇️
-                        导出全量备份</button>
+                        下载全量备份</button>
                     <button class="form-button" id="import-data-btn"
                         style="background:var(--bg-tertiary);margin-top:8px;">⬆️ 导入全量备份</button>
                     <input type="file" id="import-file" style="display:none" accept=".json">
@@ -651,7 +661,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v54 (Cache Busting)</span>
+                        <span style="color:#888;">v55 (Local File I/O)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新

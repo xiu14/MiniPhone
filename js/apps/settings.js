@@ -80,9 +80,27 @@ export function initSettings() {
     if (importBtn && importFile) {
         importBtn.addEventListener('click', () => importFile.click());
         importFile.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) importData(e.target.files[0]);
+            if (e.target.files.length > 0) processImportData(e.target.files[0], true);
             e.target.value = '';
         });
+    }
+
+    // New Local File Ops
+    const saveLocalBtn = document.getElementById('save-local-btn');
+    if (saveLocalBtn) {
+        if ('showSaveFilePicker' in window) {
+            saveLocalBtn.addEventListener('click', saveToLocalFile);
+        } else {
+            saveLocalBtn.style.display = 'none'; // Hide if not supported
+        }
+    }
+    const openLocalBtn = document.getElementById('open-local-btn');
+    if (openLocalBtn) {
+        if ('showOpenFilePicker' in window) {
+            openLocalBtn.addEventListener('click', openLocalFile);
+        } else {
+            openLocalBtn.style.display = 'none';
+        }
     }
 }
 
@@ -182,69 +200,120 @@ export function openGlobalPromptSettings() {
     document.getElementById('global-prompt-modal').classList.add('active');
 }
 
-// ========== Data Export / Import ========== //
+// Legacy Export
 function exportData() {
-    const dataStr = JSON.stringify(state);
-    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
-    const exportFileDefaultName = `miniphone_backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.json`;
+    try {
+        const dataStr = JSON.stringify(state);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const exportFileDefaultName = `miniphone_backup_${new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-")}.json`;
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', url);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        document.body.appendChild(linkElement);
+        linkElement.click();
+        document.body.removeChild(linkElement);
+
+        // Cleanup
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) {
+        console.error('Export failed:', e);
+        alert('导出失败: ' + e.message);
+    }
 }
 
-function importData(file) {
-    if (!file) return;
-
-    if (!confirm('导入备份将覆盖当前所有数据（聊天记录、角色、设置等），且无法撤销！\n\n确定要继续吗？')) {
-        return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const data = JSON.parse(e.target.result);
-
-            // Basic validation
-            if (!data.chats && !data.characters && !data.settings) {
-                alert('无效的备份文件：缺少关键数据');
-                return;
-            }
-
-            // Update state safely
-            if (data.chats) state.chats = data.chats;
-            if (data.characters) state.characters = data.characters;
-            state.moments = data.moments || [];
-            // Filter out default pack if present in backup
-            if (data.stickerPacks) {
-                state.stickerPacks = data.stickerPacks.filter(p => p.id !== 'pack_default');
-            }
-            // Merge settings instead of replacing to preserve defaults
-            if (data.settings) state.settings = { ...state.settings, ...data.settings };
-
-            await saveToLocalStorage();
-
-            // Strict Verification
-            const verifyChats = await db.chats.count();
-            const verifyChars = await db.characters.count();
-            const verifySettings = await db.settings.get('main');
-
-            if (state.chats.length > 0 && verifyChats === 0) {
-                throw new Error('数据库写入失败: 聊天记录未保存到 DB');
-            }
-
-            // 清除 localStorage 旧键，防止 reload 后迁移逻辑覆盖刚导入的数据
-            clearLegacyStorage();
-
-            alert(`数据恢复成功！ (验证通过)\n- 聊天记录: ${verifyChats} 条\n- 角色卡片: ${verifyChars} 张\n- 朋友圈: ${state.moments?.length || 0} 条\n- 设置: ${verifySettings ? '✅' : '❌'}\n\n点击确定后页面将自动刷新...`);
-            setTimeout(() => window.location.reload(), 500);
-        } catch (err) {
+// New: Save to Local File (File System Access API)
+async function saveToLocalFile() {
+    try {
+        const options = {
+            suggestedName: `miniphone_data_${new Date().toISOString().slice(0, 10)}.json`,
+            types: [{
+                description: 'MiniPhone JSON Data',
+                accept: { 'application/json': ['.json'] },
+            }],
+        };
+        const handle = await window.showSaveFilePicker(options);
+        const writable = await handle.createWritable();
+        const dataStr = JSON.stringify(state);
+        await writable.write(dataStr);
+        await writable.close();
+        alert('✅ 数据已保存到本地文件！');
+    } catch (err) {
+        if (err.name !== 'AbortError') {
             console.error(err);
-            alert(`导入严重错误：${err.message || '未知错误'}\n请截图联系开发者`);
+            alert('保存失败: ' + err.message);
         }
-    };
-    reader.readAsText(file);
+    }
+}
+
+// New: Open Local File
+async function openLocalFile() {
+    try {
+        const [handle] = await window.showOpenFilePicker({
+            types: [{
+                description: 'JSON Files',
+                accept: { 'application/json': ['.json'] },
+            }],
+            multiple: false
+        });
+        const file = await handle.getFile();
+        await processImportData(file, false); // false = don't use FileReader (already have file obj but need text)
+        // Actually handle.getFile() returns a File object which is a Blob.
+        // We can use file.text() directly.
+    } catch (err) {
+        if (err.name !== 'AbortError') {
+            console.error(err);
+            alert('打开文件失败: ' + err.message);
+        }
+    }
+}
+
+// Unified Import Logic
+async function processImportData(fileOrData, useFileReader = true) {
+    if (!confirm('即将覆盖当前所有数据！确定要继续吗？')) return;
+
+    let jsonStr = '';
+    try {
+        if (useFileReader) {
+            jsonStr = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.onerror = e => reject(e);
+                reader.readAsText(fileOrData);
+            });
+        } else {
+            // It's a File object from openLocalFile
+            jsonStr = await fileOrData.text();
+        }
+
+        const data = JSON.parse(jsonStr);
+
+        // Basic validation
+        if (!data.chats && !data.characters && !data.settings) {
+            alert('无效的数据文件');
+            return;
+        }
+
+        // Apply Data
+        if (data.chats) state.chats = data.chats;
+        if (data.characters) state.characters = data.characters;
+        state.moments = data.moments || [];
+        if (data.stickerPacks) {
+            state.stickerPacks = data.stickerPacks.filter(p => p.id !== 'pack_default');
+        }
+        if (data.settings) state.settings = { ...state.settings, ...data.settings };
+
+        await saveToLocalStorage();
+        clearLegacyStorage();
+
+        alert('✅ 数据恢复成功！即将刷新页面...');
+        setTimeout(() => window.location.reload(), 500);
+
+    } catch (e) {
+        console.error(e);
+        alert('导入失败: ' + e.message);
+    }
 }
 
 // Export for debug
