@@ -234,7 +234,26 @@ export function renderChatMessages(chat) {
             </div>`;
         }
 
-        if (!isTransfer && !isVoice && !isImgMsg) {
+        // Check if message is a call log
+        const callMatch = msg.content.match(/^\[call:(\d{2}:\d{2}):(.+)\]$/s);
+        let isCall = false;
+        if (!isTransfer && !isVoice && !isImgMsg && callMatch) {
+            isCall = true;
+            const callDuration = callMatch[1];
+            const callData = callMatch[2];
+            // Escape the JSON data for HTML attribute
+            const escapedData = callData.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
+                <div class="call-log-icon">📞</div>
+                <div class="call-log-info">
+                    <div class="call-log-label">语音通话</div>
+                    <div class="call-log-duration">时长 ${callDuration}</div>
+                </div>
+                <div class="call-log-arrow">›</div>
+            </div>`;
+        }
+
+        if (!isTransfer && !isVoice && !isImgMsg && !isCall) {
             // Basic HTML escape first to prevent XSS
             contentHtml = contentHtml.replace(/</g, "&lt;").replace(/>/g, "&gt;");
 

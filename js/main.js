@@ -26,6 +26,7 @@ import {
     regenerateCharSecretGallery
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
+import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -124,6 +125,13 @@ window.sendVoiceMessage = sendVoiceMessage;
 window.openImageMsgModal = openImageMsgModal;
 window.sendImageMessage = sendImageMessage;
 window.playTTS = playTTS;
+
+// Voice Call
+window.startVoiceCall = startVoiceCall;
+window.sendCallMessage = sendCallMessage;
+window.endVoiceCall = endVoiceCall;
+window.cancelVoiceCall = cancelVoiceCall;
+window.showCallLog = showCallLog;
 
 // Character
 window.openCharacterSelector = openCharacterSelector;
@@ -225,6 +233,9 @@ function bindGlobalListeners() {
             sendWithoutReply();
         }
     });
+
+    // Voice Call (via dropdown menu)
+    document.getElementById('menu-voice-call').addEventListener('click', startVoiceCall);
 
     // Chat Settings (via dropdown menu)
     document.getElementById('chat-menu-btn').addEventListener('click', toggleChatMenu);

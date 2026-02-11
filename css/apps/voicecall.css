@@ -1,0 +1,477 @@
+/* Voice Call UI — Dark Theme */
+
+/* ========== Overlay (shared) ========== */
+.voice-call-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+}
+
+.voice-call-overlay.active {
+    display: flex;
+}
+
+/* ========== Dialing Screen ========== */
+#voice-call-dialing {
+    background: linear-gradient(135deg, #1c1c2e 0%, #2a2a3e 50%, #1c1c2e 100%);
+    justify-content: center;
+    gap: 20px;
+}
+
+.vc-dialing-avatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(10, 132, 255, 0.4);
+    box-shadow: 0 0 40px rgba(10, 132, 255, 0.2);
+    animation: vc-pulse 2s ease-in-out infinite;
+}
+
+.vc-dialing-avatar-text {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: var(--text-primary);
+    border: 3px solid rgba(10, 132, 255, 0.4);
+    box-shadow: 0 0 40px rgba(10, 132, 255, 0.2);
+    animation: vc-pulse 2s ease-in-out infinite;
+}
+
+@keyframes vc-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 20px rgba(10, 132, 255, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 50px rgba(10, 132, 255, 0.4);
+    }
+}
+
+.vc-dialing-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 8px;
+}
+
+.vc-dialing-status {
+    font-size: 14px;
+    color: var(--text-secondary);
+    animation: vc-dots 1.5s steps(4) infinite;
+}
+
+@keyframes vc-dots {
+    0% {
+        content: '';
+    }
+
+    25% {
+        content: '.';
+    }
+
+    50% {
+        content: '..';
+    }
+
+    75% {
+        content: '...';
+    }
+}
+
+.vc-cancel-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-red);
+    color: #fff;
+    font-size: 28px;
+    cursor: pointer;
+    margin-top: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.vc-cancel-btn:active {
+    transform: scale(0.9);
+}
+
+.vc-cancel-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+}
+
+/* ========== Active Call Screen ========== */
+#voice-call-active {
+    background: var(--bg-primary);
+}
+
+/* Top bar */
+.vc-topbar {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 50px 16px 12px;
+    background: var(--bg-secondary);
+}
+
+.vc-topbar-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vc-topbar-btn {
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--accent-red);
+    font-size: 20px;
+    cursor: pointer;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Avatar section */
+.vc-avatar-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0 12px;
+    background: var(--bg-secondary);
+    width: 100%;
+}
+
+.vc-active-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-color);
+}
+
+.vc-active-avatar-text {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    color: var(--text-primary);
+    border: 2px solid var(--border-color);
+}
+
+.vc-active-name {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 8px;
+}
+
+/* Chat area */
+.vc-chat-area {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vc-system-msg {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 12px;
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    align-self: center;
+    margin: 4px 0;
+}
+
+.vc-msg {
+    max-width: 80%;
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.vc-msg.sent {
+    align-self: flex-end;
+    background: var(--bubble-sent);
+    color: #fff;
+    border-bottom-right-radius: 4px;
+}
+
+.vc-msg.received {
+    align-self: flex-start;
+    background: var(--bubble-received);
+    color: var(--text-primary);
+    border-bottom-left-radius: 4px;
+}
+
+.vc-msg-with-tts {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    align-self: flex-start;
+}
+
+.vc-replay-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 50%;
+    transition: color 0.2s;
+    flex-shrink: 0;
+}
+
+.vc-replay-btn:hover {
+    color: var(--accent-color);
+}
+
+.vc-replay-btn.playing {
+    color: var(--accent-color);
+    animation: vc-speak 0.6s ease-in-out infinite alternate;
+}
+
+@keyframes vc-speak {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0.4;
+    }
+}
+
+/* Input area */
+.vc-input-area {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.vc-input {
+    flex: 1;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 14px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    outline: none;
+    resize: none;
+    max-height: 80px;
+}
+
+.vc-input::placeholder {
+    color: var(--text-secondary);
+}
+
+.vc-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--accent-color);
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: transform 0.15s;
+}
+
+.vc-send-btn:active {
+    transform: scale(0.9);
+}
+
+/* Timer + Control bar */
+.vc-timer {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--accent-color);
+    padding: 10px 0 4px;
+    font-variant-numeric: tabular-nums;
+}
+
+.vc-controls {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    padding: 8px 0 32px;
+    background: var(--bg-primary);
+}
+
+.vc-ctrl-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.vc-ctrl-btn {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: none;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    font-size: 22px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.vc-ctrl-btn:active {
+    transform: scale(0.9);
+}
+
+.vc-ctrl-btn.hangup {
+    background: var(--accent-red);
+    color: #fff;
+}
+
+.vc-ctrl-btn.active {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+.vc-ctrl-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Typing indicator */
+.vc-typing {
+    align-self: flex-start;
+    padding: 10px 18px;
+    background: var(--bubble-received);
+    border-radius: 16px;
+    border-bottom-left-radius: 4px;
+    display: none;
+}
+
+.vc-typing.active {
+    display: flex;
+}
+
+.vc-typing-dots {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.vc-typing-dots span {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    animation: vc-typing-bounce 1.2s ease-in-out infinite;
+}
+
+.vc-typing-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.vc-typing-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes vc-typing-bounce {
+
+    0%,
+    60%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.4;
+    }
+
+    30% {
+        transform: translateY(-6px);
+        opacity: 1;
+    }
+}
+
+/* ========== Call Log Card (in chat) ========== */
+.call-log-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--bg-tertiary);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+    min-width: 180px;
+}
+
+.call-log-card:active {
+    background: var(--border-color);
+}
+
+.call-log-icon {
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.call-log-info {
+    flex: 1;
+}
+
+.call-log-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.call-log-duration {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+
+.call-log-arrow {
+    font-size: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
