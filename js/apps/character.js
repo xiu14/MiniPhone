@@ -378,7 +378,7 @@ export function renderCharSMS() {
     }
 
     container.innerHTML = char.smsChats.map(item => `
-        <div class="sms-item">
+        <div class="sms-item" onclick="alert('${item.name}\\n\\n${item.preview.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, '\\n')}')">
             <div class="sms-icon">${item.name.charAt(0)}</div>
             <div class="sms-info">
                 <div class="sms-top">
