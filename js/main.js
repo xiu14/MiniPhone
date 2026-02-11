@@ -1,9 +1,9 @@
 /* Main Entry Point */
 console.log('Main.js loading...');
-import { loadFromLocalStorage } from './core/storage.js';
-import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
-import { handleAvatarUpload } from './core/utils.js';
-import { initSettings, openGlobalPromptSettings } from './apps/settings.js';
+import { loadFromLocalStorage } from './core/storage.js?v=54';
+import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js?v=54';
+import { handleAvatarUpload } from './core/utils.js?v=54';
+import { initSettings, openGlobalPromptSettings } from './apps/settings.js?v=54';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
@@ -12,19 +12,19 @@ import {
     toggleChatMenu, openTransferModal, sendTransfer,
     openVoiceModal, sendVoiceMessage,
     openImageMsgModal, sendImageMessage
-} from './apps/chat.js';
-import { playTTS } from './services/tts.js';
+} from './apps/chat.js?v=54';
+import { playTTS } from './services/tts.js?v=54';
 import {
     renderMoments, postMoment, generateMoments, likeMoment, deleteMoment,
     commentOnMoment, showReplyInput, focusCommentInput
-} from './apps/moments.js';
+} from './apps/moments.js?v=54';
 import {
     renderCharacterGrid, openCharacterSelector, addNewCharacter,
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
     regenerateCharSecretGallery
-} from './apps/character.js';
+} from './apps/character.js?v=54';
 
 // ========== Initialization ========== //
 async function initApp() {
