@@ -638,24 +638,48 @@
 
 /* ========== TTS 朗读按钮 ========== */
 .msg-with-tts {
-    display: flex;
-    flex-direction: row;
-    align-items: flex-end;
-    max-width: 85%;
+    position: relative;
+    max-width: calc(85% - 30px);
+    margin-bottom: 2px;
+}
+
+.message-row.received .msg-with-tts {
+    margin-right: 28px;
+    /* 预留按钮空间 */
 }
 
 .message-row.sent .msg-with-tts {
-    flex-direction: row-reverse;
+    margin-left: auto;
+    max-width: 85%;
+    /* 发送方无按钮，可宽一点 */
 }
 
 .tts-btn {
+    position: absolute;
+    bottom: 0;
+    right: -28px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 14px;
     cursor: pointer;
-    opacity: 0.5;
-    padding: 0 0 4px 8px;
-    transition: opacity 0.2s, transform 0.15s;
+    opacity: 0.6;
+    transition: all 0.2s;
     user-select: none;
-    flex-shrink: 0;
+    z-index: 10;
+    border-radius: 50%;
+}
+
+.tts-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.message-row.sent .tts-btn {
+    right: auto;
+    left: -28px;
 }
 
 .tts-btn:hover {
