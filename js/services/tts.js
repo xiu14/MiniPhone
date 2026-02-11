@@ -7,6 +7,8 @@ const audioCache = new Map();
 let currentAudio = null;
 let currentBtn = null;
 let _cacheLoaded = false;
+let _ttsRequestId = 0; // Counter to handle race conditions
+let _loadingBtn = null; // Track button in loading state
 
 /**
  * Load TTS cache from Supabase into memory (call once on app startup)
@@ -45,19 +47,18 @@ export async function playTTS(text, btnEl) {
         return;
     }
 
+    // Increment request ID to invalidate any in-flight requests
+    const myRequestId = ++_ttsRequestId;
+
     // 1. If clicking the SAME button that is playing...
     if (currentAudio && currentBtn === btnEl) {
         if (!currentAudio.paused) {
-            // It is actually playing -> Stop it
             currentAudio.pause();
             resetButton(currentBtn);
             currentAudio = null;
             currentBtn = null;
             return;
         }
-        // If it is paused/ended (but currentAudio still exists e.g. onended failed),
-        // we treat this as a REPLAY request.
-        // So we just cleanup and fall through to play logic.
         resetButton(currentBtn);
         currentAudio = null;
         currentBtn = null;
@@ -71,12 +72,21 @@ export async function playTTS(text, btnEl) {
         currentBtn = null;
     }
 
+    // 3. Reset any previous loading button (from an in-flight request we're superseding)
+    if (_loadingBtn && _loadingBtn !== btnEl) {
+        resetButton(_loadingBtn);
+    }
+    _loadingBtn = btnEl;
+
     // Build cache key
     const cacheKey = text.substring(0, 200);
 
     // L1: Check in-memory cache
     if (audioCache.has(cacheKey)) {
-        playBase64Audio(audioCache.get(cacheKey), btnEl, cacheKey);
+        if (myRequestId === _ttsRequestId) {
+            _loadingBtn = null;
+            playBase64Audio(audioCache.get(cacheKey), btnEl, cacheKey);
+        }
         return;
     }
 
@@ -102,20 +112,32 @@ export async function playTTS(text, btnEl) {
         const data = await response.json();
 
         if (data.success && data.audio_base64) {
-            // L1: Write to memory
+            // Always cache, even if this request is stale
             audioCache.set(cacheKey, data.audio_base64);
-            // L2: Write to Supabase (async, don't await — fire & forget)
             saveTTSCacheEntry(cacheKey, data.audio_base64);
-            playBase64Audio(data.audio_base64, btnEl, cacheKey);
+
+            // Only play if this is still the latest request
+            if (myRequestId === _ttsRequestId) {
+                _loadingBtn = null;
+                playBase64Audio(data.audio_base64, btnEl, cacheKey);
+            } else {
+                // Stale request — just reset the button
+                btnEl.textContent = originalText;
+                btnEl.classList.remove('tts-loading');
+            }
         } else {
             console.error('TTS failed:', data.message);
-            alert('语音合成失败: ' + JSON.stringify(data.message || '未知错误'));
+            if (myRequestId === _ttsRequestId) {
+                alert('语音合成失败: ' + JSON.stringify(data.message || '未知错误'));
+            }
             btnEl.textContent = originalText;
             btnEl.classList.remove('tts-loading');
         }
     } catch (e) {
         console.error('TTS request error:', e);
-        alert('语音请求失败: ' + e.message);
+        if (myRequestId === _ttsRequestId) {
+            alert('语音请求失败: ' + e.message);
+        }
         btnEl.textContent = originalText;
         btnEl.classList.remove('tts-loading');
     }
