@@ -2,8 +2,10 @@
 import { state } from '../core/storage.js';
 
 // Simple in-memory audio cache: text -> base64
+// Simple in-memory audio cache: text -> base64
 const audioCache = new Map();
 let currentAudio = null;
+let currentBtn = null;
 
 /**
  * Play TTS for given text, using the button element for UI feedback
@@ -16,10 +18,21 @@ export async function playTTS(text, btnEl) {
         return;
     }
 
-    // Stop currently playing audio
+    // 1. If clicking the SAME button that is playing, stop it.
+    if (currentAudio && currentBtn === btnEl) {
+        currentAudio.pause();
+        resetButton(currentBtn);
+        currentAudio = null;
+        currentBtn = null;
+        return;
+    }
+
+    // 2. Stop any OTHER playing audio
     if (currentAudio) {
         currentAudio.pause();
+        if (currentBtn) resetButton(currentBtn);
         currentAudio = null;
+        currentBtn = null;
     }
 
     // Check cache
@@ -67,45 +80,39 @@ export async function playTTS(text, btnEl) {
     }
 }
 
+function resetButton(btn) {
+    if (!btn) return;
+    btn.textContent = '🔊';
+    btn.classList.remove('tts-playing', 'tts-loading');
+    // Note: We do NOT remove onclick because we didn't add it dynamically
+}
+
 function playBase64Audio(base64, btnEl) {
     const audio = new Audio('data:audio/mp3;base64,' + base64);
     currentAudio = audio;
+    currentBtn = btnEl;
 
     btnEl.textContent = '⏹️';
     btnEl.classList.remove('tts-loading');
     btnEl.classList.add('tts-playing');
 
     audio.onended = () => {
-        btnEl.textContent = '🔊';
-        btnEl.classList.remove('tts-playing');
+        resetButton(btnEl);
         currentAudio = null;
+        currentBtn = null;
     };
 
     audio.onerror = () => {
-        btnEl.textContent = '🔊';
-        btnEl.classList.remove('tts-playing');
+        resetButton(btnEl);
         currentAudio = null;
-    };
-
-    // Click to stop
-    const stopHandler = () => {
-        audio.pause();
-        btnEl.textContent = '🔊';
-        btnEl.classList.remove('tts-playing');
-        currentAudio = null;
-        btnEl.removeEventListener('click', stopHandler);
-    };
-
-    // Temporarily override onclick to allow stopping
-    btnEl.onclick = (e) => {
-        e.stopPropagation();
-        stopHandler();
+        currentBtn = null;
     };
 
     audio.play().catch(e => {
         console.error('Audio play failed:', e);
-        btnEl.textContent = '🔊';
-        btnEl.classList.remove('tts-playing');
+        resetButton(btnEl);
+        currentAudio = null;
+        currentBtn = null;
     });
 }
 
