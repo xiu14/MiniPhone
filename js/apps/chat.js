@@ -236,17 +236,20 @@ export function renderChatMessages(chat) {
 
         // Check if message is a call log: [call:MM:SS:jsonData]
         let isCall = false;
-        if (!isTransfer && !isVoice && !isImgMsg && msg.content.trim().startsWith('[call:')) {
-            // Regex to match [call:duration:data] allowing newlines
-            const match = msg.content.trim().match(/^\[call:(\d{2}:\d{2}):([\s\S]*)\]$/);
+        // Loose check: just see if it contains "[call:"
+        if (!isTransfer && !isVoice && !isImgMsg && msg.content.includes('[call:')) {
+            // Regex match WITHOUT ^ and $ anchors to allow surrounding whitespace/junk
+            // match [call:MM:SS: ... ]
+            const match = msg.content.match(/\[call:(\d{2}:\d{2}):([\s\S]*)\]/);
+
             if (match) {
                 const callDuration = match[1];
-                const callDataRaw = match[2]; // This is the JSON string
+                const callDataRaw = match[2];
 
-                // Validate it looks like JSON
-                if (callDataRaw.trim().startsWith('[') && callDataRaw.trim().endsWith(']')) {
+                // Loose JSON validation
+                if (callDataRaw.includes('[') && callDataRaw.includes(']')) {
                     isCall = true;
-                    // Pass ENCODED string to avoid quoting hell in HTML attribute
+                    // Pass ENCODED string
                     const encodedData = encodeURIComponent(callDataRaw);
                     contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', '${encodedData}')">
                         <div class="call-log-icon">📞</div>
