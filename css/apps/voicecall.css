@@ -475,3 +475,11 @@
     color: var(--text-secondary);
     flex-shrink: 0;
 }
+
+/* ========== Call Log Message Bubble ========== */
+.message-call {
+    background: transparent !important;
+    padding: 0 !important;
+    max-width: 260px;
+    box-shadow: none !important;
+}

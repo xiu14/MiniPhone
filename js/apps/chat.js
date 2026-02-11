@@ -236,25 +236,35 @@ export function renderChatMessages(chat) {
 
         // Check if message is a call log: [call:MM:SS:jsonData]
         let isCall = false;
-        if (!isTransfer && !isVoice && !isImgMsg && msg.content.startsWith('[call:') && msg.content.endsWith(']')) {
-            // Extract duration (format: [call:MM:SS:...)
-            const firstColon = 5; // after "[call"
-            const durationEnd = msg.content.indexOf(':', firstColon + 1);
-            if (durationEnd > 0) {
-                const secondColon = msg.content.indexOf(':', durationEnd + 1);
-                if (secondColon > 0) {
-                    const callDuration = msg.content.substring(firstColon + 1, secondColon);
-                    const callData = msg.content.substring(secondColon + 1, msg.content.length - 1);
-                    if (/^\d{2}:\d{2}$/.test(callDuration) && callData.startsWith('[')) {
-                        isCall = true;
-                        contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
-                            <div class="call-log-icon">📞</div>
-                            <div class="call-log-info">
-                                <div class="call-log-label">语音通话</div>
-                                <div class="call-log-duration">时长 ${callDuration}</div>
-                            </div>
-                            <div class="call-log-arrow">›</div>
-                        </div>`;
+        // Check startsWith only
+        if (!isTransfer && !isVoice && !isImgMsg && msg.content.trim().startsWith('[call:')) {
+            const content = msg.content.trim();
+            // Find first two colons
+            const firstColon = content.indexOf(':');
+            if (firstColon > 0) {
+                const durationEnd = content.indexOf(':', firstColon + 1);
+                if (durationEnd > 0) {
+                    const callDuration = content.substring(firstColon + 1, durationEnd).trim();
+                    // Find start of JSON array
+                    const jsonStart = content.indexOf('[', durationEnd);
+                    if (jsonStart > durationEnd && /^\d{2}:\d{2}$/.test(callDuration)) {
+                        // Find end of JSON array (last ']')
+                        const jsonEnd = content.lastIndexOf(']');
+                        if (jsonEnd > jsonStart) {
+                            const callData = content.substring(jsonStart, jsonEnd + 1);
+                            // Simple validation: it looks like a JSON array
+                            if (callData.startsWith('[') && callData.endsWith(']')) {
+                                isCall = true;
+                                contentHtml = `<div class="call-log-card" onclick="showCallLog('${callDuration}', decodeURIComponent('${encodeURIComponent(callData)}'))">
+                                    <div class="call-log-icon">📞</div>
+                                    <div class="call-log-info">
+                                        <div class="call-log-label">语音通话</div>
+                                        <div class="call-log-duration">时长 ${callDuration}</div>
+                                    </div>
+                                    <div class="call-log-arrow">›</div>
+                                </div>`;
+                            }
+                        }
                     }
                 }
             }
