@@ -216,8 +216,21 @@ export async function regenerateCharQQ() {
     btn.textContent = '⏳';
 
     const chatCtx = getChatContext(char.name);
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"(人设:${char.persona})生成微信聊天列表(3-5个联系人)。${chatCtx}
-只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "联系人", "preview": "最后一条消息", "time": "时间"}]`;
+    const prompt = `你是一个世界观构建器。请构建角色"${char.name}"(人设:${char.persona})的【微信/QQ聊天会话列表】(4-6个会话)。
+
+背景参考：
+${chatCtx}
+
+严格遵守以下规则：
+1. **禁忌**：列表里**绝对不能**包含"用户"、"我"或角色自己（因为系统会自动同步真实用户聊天，无需生成）。
+2. **关系多样性**：请生成角色生活圈中的其他人，例如：
+   - 👥 **群聊**：工作群、家庭群、兴趣群（如"xx游戏开黑群"）。
+   - 👤 **个人**：死党、闺蜜、同事、父母、前任、暧昧对象等。
+3. **内容**：preview字段显示最后一条消息预览，要符合人设和生活状态。
+4. **格式**：只返回JSON数组，不要Markdown。
+
+示例：
+[{"name": "相亲一家亲(群)", "preview": "[红包] 恭喜发财", "time": "10:05"}, {"name": "老板", "preview": "明天早会记得带PPT", "time": "昨天"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
@@ -386,8 +399,25 @@ export async function regenerateCharSMS() {
     btn.textContent = '⏳';
 
     const chatCtx = getChatContext(char.name);
-    const prompt = `你是一个JSON生成器。为角色"${char.name}"（人设：${char.persona}）生成短信收件箱内容（4-6条）。${chatCtx}
-只返回JSON数组，不要任何 markdown 标记或解释: [{"name": "发件人", "preview": "短信内容预览", "time": "时间"}]`;
+    const prompt = `你是一个世界观构建器。请构建角色"${char.name}"（人设：${char.persona}）的手机【短信收件箱】内容（4-6条）。
+
+背景参考：
+${chatCtx}
+
+严格遵守以下生成规则：
+1. **视角**：这是角色收到的短信列表（Inbox），**所有消息都是别人发给角色的**。
+2. **禁忌发件人**：
+   - ❌ 发件人不能是角色自己（"${char.name}"）。
+   - ❌ 发件人不能是"我"或"用户"（因为用户和角色在微信/其它App聊天，不会发短信）。
+3. **内容来源**：必须是角色生活圈中的第三方。例如：
+   - 📦 **服务类**：快递取件码（菜鸟驿站）、信用卡账单、话费余额（10086）、外卖送达、验证码。
+   - 💼 **工作/学业**：老板/老师的通知、同事的八卦、会议提醒。
+   - 🏠 **生活**：房东、物业、妈妈/爸爸的唠叨、其他朋友的邀约。
+   - 🎭 **剧情相关**：如果参考聊天中提到了某事（如"去医院"），这里应有对应的挂号成功通知或保险推销。
+4. **格式**：只返回JSON数组，不要Markdown。
+
+JSON格式示例：
+[{"name": "菜鸟驿站", "preview": "凭取件码8-2-303取件，询问电话...", "time": "14:20"}, {"name": "妈妈", "preview": "这周末回家吃饭吗？给你做了红烧肉。", "time": "昨天"}]`;
 
     const result = await generateCharContent(prompt);
     btn.textContent = '🔄';
