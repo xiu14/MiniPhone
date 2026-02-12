@@ -144,6 +144,7 @@ window.regenerateCharMemo = regenerateCharMemo;
 window.regenerateCharBrowser = regenerateCharBrowser;
 window.regenerateCharSMS = regenerateCharSMS;
 window.regenerateCharX = regenerateCharX;
+window.regenerateCharDiary = regenerateCharDiary;
 
 // Balance
 window.openBalanceApp = openBalanceApp;
@@ -301,4 +302,5 @@ function bindGlobalListeners() {
     document.getElementById('regenerate-char-sms-btn').addEventListener('click', regenerateCharSMS);
     document.getElementById('regenerate-char-x-btn').addEventListener('click', regenerateCharX);
     document.getElementById('regenerate-char-secret-gallery-btn').addEventListener('click', regenerateCharSecretGallery);
+    document.getElementById('regenerate-char-diary-btn').addEventListener('click', regenerateCharDiary);
 }

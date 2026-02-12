@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=75">
+    <link rel="stylesheet" href="css/main.css?v=76">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=75');
+            await import('./js/main.js?v=76');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -393,12 +393,12 @@
                             <div class="icon-bg">📝</div>
                             <span class="label">备忘录</span>
                         </div>
-                    </div>
-                    <div class="app-row">
                         <div class="app-icon" onclick="openCharApp('browser')">
                             <div class="icon-bg">🌐</div>
                             <span class="label">浏览器</span>
                         </div>
+                    </div>
+                    <div class="app-row">
                         <div class="app-icon" onclick="openCharApp('sms')">
                             <div class="icon-bg">✉️</div>
                             <span class="label">短信</span>
@@ -694,7 +694,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v75 (CPhone Diary)</span>
+                        <span style="color:#888;">v76 (Layout Fix)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新
