@@ -2,6 +2,7 @@
 import { state, saveToLocalStorage, getCurrentCharacter, setCurrentCharacterId } from '../core/storage.js';
 import { showScreen, switchToCharHomeScreen } from '../core/router.js';
 import { generateCharContent } from '../services/api.js';
+import { playTTS } from '../services/tts.js';
 
 // Safe JSON parser - extracts JSON array from AI text
 function safeParseJSON(text) {
@@ -96,7 +97,8 @@ export function addNewCharacter() {
         persona,
         qqChats: [],
         album: [],
-        memos: []
+        memos: [],
+        diaries: []
     };
 
     state.characters.push(newChar);
@@ -147,6 +149,10 @@ export function openCharApp(appName) {
         case 'calculator':
             document.getElementById('char-calculator-screen').classList.add('active');
             renderCharCalculator();
+            break;
+        case 'diary':
+            document.getElementById('char-diary-screen').classList.add('active');
+            renderCharDiary();
             break;
     }
 }
@@ -608,6 +614,95 @@ export async function regenerateCharSecretGallery() {
                 saveToLocalStorage();
                 renderCharSecretGallery();
             }
+        } catch (e) { console.error(e); }
+    }
+}
+
+// ========== Diary ==========
+export function renderCharDiary() {
+    const char = getCurrentCharacter();
+    const container = document.getElementById('char-diary-list');
+
+    // Initialize if missing
+    if (char && !char.diaries) {
+        char.diaries = [];
+        saveToLocalStorage();
+    }
+
+    if (!char || !char.diaries || char.diaries.length === 0) {
+        container.innerHTML = `<div class="empty-state"><div class="icon">📓</div><div class="text">暂无日记<br>点击右上角🔄生成</div></div>`;
+        return;
+    }
+
+    container.innerHTML = char.diaries.map((item, index) => {
+        // Handle legacy plays
+        const content = item.content || '';
+        // Escape content for HTML attribute
+        const escapedContent = content.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
+        return `
+        <div class="diary-item">
+            <div class="diary-header">
+                <span class="diary-date">${item.date || '未知日期'}</span>
+                <button class="diary-tts-btn" onclick="playDiaryTTS(this, '${index}')">🔊 朗读</button>
+            </div>
+            <div class="diary-content" id="diary-content-${index}">${content}</div>
+        </div>
+        `;
+    }).join('');
+
+    // Global helper for the onclick
+    window.playDiaryTTS = (btn, idx) => {
+        const text = document.getElementById(`diary-content-${idx}`).innerText;
+        playTTS(text, btn);
+    };
+}
+
+export async function regenerateCharDiary() {
+    const char = getCurrentCharacter();
+    if (!char) return;
+
+    const btn = document.getElementById('regenerate-char-diary-btn');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳';
+
+    const chatCtx = getChatContext(char.name);
+    // Get current date
+    const now = new Date();
+    const dateStr = `${now.getMonth() + 1}月${now.getDate()}日 ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    const prompt = `你是一个日记生成器。请以角色"${char.name}"（人设: ${char.persona}）的口吻写一篇今天的日记（300字左右）。
+    
+背景参考：
+${chatCtx}
+
+要求：
+1. **完全第一人称**：记录今天发生的事情、心情感悟，或者对刚才聊天的看法。
+2. **情感真挚**：符合人设语气（傲娇/温柔/高冷等），不要像流水账。
+3. **私密性**：这是写给自己看的日记，可以包含一些内心的小九九或不敢对别人说的话。
+
+只返回JSON对象，不要Markdown: {"content": "日记正文内容...", "date": "${dateStr}"}`;
+
+    const result = await generateCharContent(prompt);
+    btn.textContent = originalText;
+
+    if (result) {
+        try {
+            // Might return a single object or array, handle both
+            let newEntry = safeParseJSON(result);
+            if (!newEntry) return;
+
+            // Normalize
+            if (Array.isArray(newEntry)) newEntry = newEntry[0];
+
+            // Ensure date
+            if (!newEntry.date) newEntry.date = dateStr;
+
+            // Prepend
+            char.diaries = char.diaries || [];
+            char.diaries.unshift(newEntry);
+            saveToLocalStorage();
+            renderCharDiary();
         } catch (e) { console.error(e); }
     }
 }
