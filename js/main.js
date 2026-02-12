@@ -3,7 +3,7 @@ console.log('Main.js loading...');
 import { loadFromLocalStorage, state } from './core/storage.js';
 import { showScreen, switchToCharHomeScreen, switchToMyPhone } from './core/router.js';
 import { handleAvatarUpload } from './core/utils.js';
-import { initSettings, openGlobalPromptSettings } from './apps/settings.js';
+import { initSettings } from './apps/settings.js';
 import {
     renderChatList, addNewChat, openChat, sendMessage, sendWithoutReply,
     openChatSettings, saveChatSettings, clearChatData, deleteCurrentChat,
@@ -27,7 +27,7 @@ import {
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
 import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
-import { checkBalance } from './apps/balance.js?v=71';
+import { openBalanceApp } from './apps/balance.js?v=72';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -115,7 +115,6 @@ window.insertEmoji = insertEmoji;
 // Summaries
 window.openSummaryApp = openSummaryApp;
 window.openSummaryDetail = openSummaryDetail;
-window.openGlobalPromptSettings = openGlobalPromptSettings;
 
 // Transfer & Voice
 window.toggleChatMenu = toggleChatMenu;
@@ -147,7 +146,7 @@ window.regenerateCharSMS = regenerateCharSMS;
 window.regenerateCharX = regenerateCharX;
 
 // Balance
-window.checkBalance = checkBalance;
+window.openBalanceApp = openBalanceApp;
 
 // Moments
 window.renderMoments = renderMoments; // exposed if needed by router

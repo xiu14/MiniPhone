@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=71">
+    <link rel="stylesheet" href="css/main.css?v=72">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=71');
+            await import('./js/main.js?v=72');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -98,16 +98,23 @@
                     <div class="icon-bg-desktop">⚙️</div>
                     <span class="label">API设置</span>
                 </div>
-                <div class="desktop-app-icon"
-                    ontouchstart="if(window.openGlobalPromptSettings) window.openGlobalPromptSettings()"
-                    onclick="if(window.openGlobalPromptSettings) window.openGlobalPromptSettings()">
-                    <div class="icon-bg-desktop">📖</div>
-                    <span class="label">世界书</span>
-                </div>
-                <div class="desktop-app-icon" onclick="checkBalance()">
+                <div class="desktop-app-icon" onclick="openBalanceApp()">
                     <div class="icon-bg-desktop">💰</div>
                     <span class="label">TTS余额</span>
                 </div>
+
+            </div>
+        </div>
+
+        <!-- ========== 余额查询界面 ========== -->
+        <div id="balance-app-screen" class="screen">
+            <div class="header">
+                <span class="back-btn" onclick="showScreen('home-screen')">‹</span>
+                <span>资源包余额</span>
+                <span class="action-btn" id="refresh-balance-btn" onclick="openBalanceApp()">🔄</span>
+            </div>
+            <div id="balance-list" class="list-container" style="padding:16px;">
+                <div style="text-align:center;color:#666;margin-top:20px;">正在加载数据...</div>
             </div>
         </div>
 
@@ -673,7 +680,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v71 (Fix Cache)</span>
+                        <span style="color:#888;">v72 (Balance Page)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新
@@ -686,27 +693,7 @@
         </div>
 
     </div>
-    <!-- Global System Prompt Settings Modal -->
-    <div id="global-prompt-modal" class="modal">
-        <div class="modal-content">
-            <h3 class="modal-title">世界书设定</h3>
-            <div class="form-group">
-                <label>世界书 (World Book)</label>
-                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">世界书内容将应用于所有角色，用于设定世界观或 AI
-                    回复风格（如强制短回复、微信风格等）。</div>
-                <textarea id="global-system-prompt" class="form-input" rows="8"
-                    placeholder="例如：请完全模拟微信聊天风格，回复简短..."></textarea>
-            </div>
-            <div class="modal-buttons">
-                <button class="form-button secondary" id="cancel-global-prompt-btn">取消</button>
-                <button class="form-button primary" id="save-global-prompt-btn">保存</button>
-            </div>
-            <div class="modal-buttons" style="margin-top:10px;">
-                <button class="form-button" id="reset-global-prompt-btn"
-                    style="background:var(--bg-secondary);color:var(--text-secondary);">恢复默认微信风格</button>
-            </div>
-        </div>
-    </div>
+
     <!-- ========== 语音通话 - 呼叫中 ========== -->
     <div id="voice-call-dialing" class="voice-call-overlay">
         <div id="vc-dialing-avatar"></div>
