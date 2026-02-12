@@ -27,6 +27,7 @@ import {
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
 import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
+import { checkBalance } from './apps/balance.js';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -144,6 +145,9 @@ window.regenerateCharMemo = regenerateCharMemo;
 window.regenerateCharBrowser = regenerateCharBrowser;
 window.regenerateCharSMS = regenerateCharSMS;
 window.regenerateCharX = regenerateCharX;
+
+// Balance
+window.checkBalance = checkBalance;
 
 // Moments
 window.renderMoments = renderMoments; // exposed if needed by router

@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=67">
+    <link rel="stylesheet" href="css/main.css?v=69">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=67');
+            await import('./js/main.js?v=69');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -103,6 +103,10 @@
                     onclick="if(window.openGlobalPromptSettings) window.openGlobalPromptSettings()">
                     <div class="icon-bg-desktop">📖</div>
                     <span class="label">世界书</span>
+                </div>
+                <div class="desktop-app-icon" onclick="checkBalance()">
+                    <div class="icon-bg-desktop">💰</div>
+                    <span class="label">TTS余额</span>
                 </div>
             </div>
         </div>
@@ -669,7 +673,7 @@
                     <div
                         style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:14px;">
                         <span>当前版本</span>
-                        <span style="color:#888;">v67 (UI Polish)</span>
+                        <span style="color:#888;">v69 (Balance Check)</span>
                     </div>
                     <button class="form-button" id="check-update-btn" style="background:#546e7a;">
                         检查更新 / 强制刷新
