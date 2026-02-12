@@ -27,7 +27,7 @@ import {
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
 import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
-import { openBalanceApp } from './apps/balance.js?v=73';
+import { openBalanceApp } from './apps/balance.js?v=77';
 
 // ========== Initialization ========== //
 async function initApp() {
