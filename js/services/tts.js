@@ -78,17 +78,21 @@ export async function playTTS(text, btnEl) {
     }
     _loadingBtn = btnEl;
 
-    // Build cache key
-    const cacheKey = text.substring(0, 200);
+    // Build cache key: include voiceId so switching voices won't reuse stale cache
+    const cacheKey = `${settings.ttsVoiceId}::${text.substring(0, 200)}`;
+
+    console.log(`🔊 [TTS] playTTS called | text="${text.substring(0, 50)}..." | cacheKey="${cacheKey.substring(0, 60)}..."`);
 
     // L1: Check in-memory cache
     if (audioCache.has(cacheKey)) {
+        console.log(`🔊 [TTS] ✅ Cache HIT for key="${cacheKey.substring(0, 60)}..."`);
         if (myRequestId === _ttsRequestId) {
             _loadingBtn = null;
             playBase64Audio(audioCache.get(cacheKey), btnEl, cacheKey);
         }
         return;
     }
+    console.log(`🔊 [TTS] ❌ Cache MISS, fetching from API...`);
 
     // UI feedback
     const originalText = btnEl.textContent;

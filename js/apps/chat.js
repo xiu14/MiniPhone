@@ -311,8 +311,14 @@ export function renderChatMessages(chat) {
                 ttsText = msg.content.replace(/\[sticker:.*?\]/g, '').trim();
             }
             if (ttsText) {
-                const escapedText = ttsText.replace(/'/g, "\\'").replace(/"/g, '&quot;').replace(/\n/g, ' ');
-                ttsButtonHtml = `<span class="tts-btn" data-tts-text="${ttsText.replace(/"/g, '&quot;')}" onclick="event.stopPropagation();window.playTTS(this.dataset.ttsText, this)">🔊</span>`;
+                // Full HTML entity escape for data attribute to prevent truncation/corruption
+                const safeAttrText = ttsText
+                    .replace(/&/g, '&amp;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/\n/g, ' ');
+                ttsButtonHtml = `<span class="tts-btn" data-tts-text="${safeAttrText}" onclick="event.stopPropagation();window.playTTS(this.dataset.ttsText, this)">🔊</span>`;
             }
         }
 
