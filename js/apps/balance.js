@@ -1,16 +1,26 @@
 /* 
- * Balance Check App - WeChat Wallet Style
+ * Balance Check App - WeChat Wallet Style with Caching
  * 用于查询火山引擎 TTS 资源包余额 (通过 Zeabur 代理)
  */
 
 const API_URL = "https://ttss.zeabur.app/api/check_balance";
+const CACHE_KEY = "miniphone_balance_data";
 
 /**
  * 打开余额查询应用
  */
 export async function openBalanceApp() {
     showScreen('balance-app-screen');
-    await refreshBalanceData();
+
+    // 优先读取缓存
+    const cachedData = loadFromCache();
+    if (cachedData) {
+        console.log("📦 [Balance] Loaded from cache", cachedData);
+        renderWalletUI(cachedData.items, cachedData.timestamp);
+    } else {
+        // 无缓存则自动刷新
+        await refreshBalanceData();
+    }
 }
 
 /**
@@ -21,32 +31,79 @@ async function refreshBalanceData() {
     const refreshBtn = document.getElementById('refresh-balance-btn');
 
     try {
-        if (listContainer) listContainer.innerHTML = renderLoading();
-        if (refreshBtn) { refreshBtn.style.opacity = '0.5'; refreshBtn.style.pointerEvents = 'none'; }
+        // 仅在无内容时显示全屏 Loading
+        if (!listContainer.querySelector('.wallet-hero')) {
+            listContainer.innerHTML = renderLoading();
+        }
+
+        // 按钮旋转动画
+        if (refreshBtn) {
+            refreshBtn.classList.add('rotating');
+            refreshBtn.style.pointerEvents = 'none';
+        }
 
         const response = await fetch(API_URL);
         if (!response.ok) throw new Error(`请求失败: ${response.status}`);
 
         const result = await response.json();
         if (!result.success || !result.data || result.data.length === 0) {
-            renderError(result.message || '未找到资源包');
+            // 如果刷新失败但有旧数据，保留旧数据并提示
+            if (loadFromCache()) {
+                alert(`刷新失败: ${result.message || '未知错误'}，当前显示为旧数据`);
+            } else {
+                renderError(result.message || '未找到资源包');
+            }
             return;
         }
 
-        renderWalletUI(result.data);
+        // 保存到缓存
+        const timestamp = Date.now();
+        saveToCache(result.data, timestamp);
+
+        // 渲染新数据
+        renderWalletUI(result.data, timestamp);
 
     } catch (e) {
         console.error("❌ 余额查询错误:", e);
-        renderError(e.message);
+        // 如果刷新失败但有旧数据，保留旧数据并提示
+        if (loadFromCache()) {
+            alert(`网络错误: ${e.message}，当前显示为旧数据`);
+        } else {
+            renderError(e.message);
+        }
     } finally {
-        if (refreshBtn) { refreshBtn.style.opacity = '1'; refreshBtn.style.pointerEvents = 'auto'; }
+        if (refreshBtn) {
+            refreshBtn.classList.remove('rotating');
+            refreshBtn.style.pointerEvents = 'auto';
+        }
+    }
+}
+
+// ========== Caching Logic ========== //
+function saveToCache(items, timestamp) {
+    try {
+        const data = { items, timestamp };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+    } catch (e) {
+        console.warn("[Balance] Failed to save cache:", e);
+    }
+}
+
+function loadFromCache() {
+    try {
+        const json = localStorage.getItem(CACHE_KEY);
+        if (!json) return null;
+        return JSON.parse(json);
+    } catch (e) {
+        console.warn("[Balance] Failed to load cache:", e);
+        return null;
     }
 }
 
 /**
  * 渲染仿微信钱包 UI
  */
-function renderWalletUI(items) {
+function renderWalletUI(items, timestamp) {
     const container = document.getElementById('balance-list');
     if (!container) return;
 
@@ -61,6 +118,9 @@ function renderWalletUI(items) {
     });
 
     const usagePercent = totalQuota > 0 ? Math.min(100, (totalUsed / totalQuota) * 100) : 0;
+
+    // 格式化时间
+    const timeStr = timestamp ? new Date(timestamp).toLocaleString('zh-CN', { hour12: false }) : '刚刚';
 
     container.innerHTML = `
         <!-- 顶部钱包卡片 -->
@@ -80,12 +140,15 @@ function renderWalletUI(items) {
         </div>
 
         <!-- 资源包明细 -->
-        <div class="wallet-section-title">资源包明细</div>
+        <div class="wallet-section-title" style="display:flex;justify-content:space-between;align-items:center;">
+            <span>资源包明细</span>
+            <span style="font-size:11px;color:var(--text-secondary);font-weight:normal;">更新于: ${timeStr}</span>
+        </div>
         <div class="wallet-detail-list">
             ${items.map(item => renderPackageItem(item)).join('')}
         </div>
 
-        <div class="wallet-footer">数据来自火山引擎 · 点击刷新按钮更新</div>
+        <div class="wallet-footer">数据来自火山引擎 · 点击顶部刷新按钮更新</div>
     `;
 }
 
@@ -131,7 +194,7 @@ function renderLoading() {
         <div class="wallet-hero" style="opacity:0.6;">
             <div class="wallet-hero-label">剩余额度（字符）</div>
             <div class="wallet-hero-amount" style="animation:pulse 1.5s infinite;">--</div>
-            <div class="wallet-hero-sub"><span>正在查询...</span></div>
+            <div class="wallet-hero-sub"><span>正在读取缓存或查询...</span></div>
         </div>
     `;
 }
@@ -144,7 +207,7 @@ function renderError(msg) {
                 <div style="font-size:48px;margin-bottom:16px;">😕</div>
                 <div style="font-size:16px;color:var(--text-primary);margin-bottom:8px;">加载失败</div>
                 <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">${msg}</div>
-                <button onclick="openBalanceApp()" style="padding:10px 32px;border-radius:24px;border:none;background:var(--accent-color);color:white;font-size:14px;">重试</button>
+                <button onclick="document.getElementById('refresh-balance-btn').click()" style="padding:10px 32px;border-radius:24px;border:none;background:var(--accent-color);color:white;font-size:14px;">重试</button>
             </div>
         `;
     }
