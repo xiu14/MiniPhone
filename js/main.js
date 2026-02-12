@@ -23,11 +23,11 @@ import {
     openCharacterPhone, openCharApp,
     regenerateCharQQ, regenerateCharAlbum, regenerateCharMemo,
     regenerateCharBrowser, regenerateCharSMS, regenerateCharX,
-    regenerateCharSecretGallery
+    regenerateCharSecretGallery, regenerateCharDiary
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
 import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
-import { openBalanceApp } from './apps/balance.js?v=77';
+import { openBalanceApp } from './apps/balance.js?v=78';
 
 // ========== Initialization ========== //
 async function initApp() {

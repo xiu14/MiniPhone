@@ -7,7 +7,7 @@
     <title>MiniPhone</title>
     <meta name="description" content="AI 模拟手机聊天应用">
     <meta name="theme-color" content="#0a0a0a">
-    <link rel="stylesheet" href="css/main.css?v=77">
+    <link rel="stylesheet" href="css/main.css?v=78">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="icon" href="icons/icon-192.svg" type="image/svg+xml">
@@ -37,7 +37,7 @@
     <script type="module">
         console.log("Starting module load...");
         try {
-            await import('./js/main.js?v=77');
+            await import('./js/main.js?v=78');
             console.log("Module loaded successfully");
         } catch (e) {
             console.error("Module Load Failed:", e);
@@ -47,8 +47,9 @@
                 for (const reg of regs) await reg.unregister();
                 const keys = await caches.keys();
                 for (const key of keys) await caches.delete(key);
-                console.log('Caches cleared, reloading...');
-                location.reload(true);
+                console.log('Caches cleared. Please refresh manually.');
+                // location.reload(true); // DISABLED: Debugging infinite loop
+                alert("Critical Error: Module load failed. Auto-reload disabled for debugging.\nCheck console for details.\n\n" + e.message);
             } else {
                 alert("模块加载失败:\\n" + e.message + "\\n\\n请清除浏览器缓存后重试。");
             }
