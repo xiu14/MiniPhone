@@ -1,8 +1,8 @@
 /* Main CSS imports */
-@import 'base.css?v=67';
-@import 'layout.css?v=67';
-@import 'components.css?v=67';
-@import 'apps/chat.css?v=67';
-@import 'apps/moments.css?v=67';
-@import 'apps/character.css?v=67';
-@import 'apps/voicecall.css?v=67';
+@import 'base.css?v=70';
+@import 'layout.css?v=70';
+@import 'components.css?v=70';
+@import 'apps/chat.css?v=70';
+@import 'apps/moments.css?v=70';
+@import 'apps/character.css?v=70';
+@import 'apps/voicecall.css?v=70';
