@@ -1,0 +1,185 @@
+/* ========== Balance Wallet Page ========== */
+
+/* Hero 顶部余额卡片 */
+.wallet-hero {
+    background: linear-gradient(135deg, #1a6dff 0%, #6236ff 100%);
+    border-radius: 16px;
+    padding: 28px 24px 20px;
+    margin: 0 0 20px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+
+.wallet-hero::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -20%;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 50%;
+}
+
+.wallet-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 160px;
+    height: 160px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 50%;
+}
+
+.wallet-hero-label {
+    font-size: 13px;
+    opacity: 0.75;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.wallet-hero-amount {
+    font-size: 42px;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 12px;
+    font-variant-numeric: tabular-nums;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.wallet-hero-sub {
+    display: flex;
+    gap: 8px;
+    font-size: 13px;
+    opacity: 0.7;
+    margin-bottom: 16px;
+}
+
+/* 进度条 */
+.wallet-progress-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.wallet-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #80ffdb, #72efdd, #64dfdf);
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wallet-progress-label {
+    font-size: 11px;
+    opacity: 0.55;
+    text-align: right;
+}
+
+/* 明细标题 */
+.wallet-section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    padding: 0 4px 10px;
+}
+
+/* 明细列表 */
+.wallet-detail-list {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.wallet-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+}
+
+.wallet-item:not(:last-child) {
+    border-bottom: 0.5px solid var(--border-color);
+}
+
+.wallet-item-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.wallet-item-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.wallet-item-info {
+    min-width: 0;
+}
+
+.wallet-item-name {
+    font-size: 14px;
+    color: var(--text-primary);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 160px;
+}
+
+.wallet-item-status {
+    font-size: 12px;
+    margin-top: 2px;
+}
+
+.wallet-item-right {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.wallet-item-balance {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.wallet-item-unit {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 1px;
+}
+
+/* Footer */
+.wallet-footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+    margin-top: 24px;
+    padding-bottom: 20px;
+}
+
+/* Loading pulse animation */
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+}

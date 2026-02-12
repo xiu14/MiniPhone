@@ -1,6 +1,5 @@
-
 /* 
- * Balance Check App - Full Page Version
+ * Balance Check App - WeChat Wallet Style
  * 用于查询火山引擎 TTS 资源包余额 (通过 Zeabur 代理)
  */
 
@@ -10,10 +9,7 @@ const API_URL = "https://ttss.zeabur.app/api/check_balance";
  * 打开余额查询应用
  */
 export async function openBalanceApp() {
-    // 切换到余额界面
     showScreen('balance-app-screen');
-
-    // 立即刷新数据
     await refreshBalanceData();
 }
 
@@ -25,120 +21,130 @@ async function refreshBalanceData() {
     const refreshBtn = document.getElementById('refresh-balance-btn');
 
     try {
-        // UI Loading State
-        if (listContainer) listContainer.innerHTML = '<div style="text-align:center;color:#666;margin-top:20px;">正在加载数据...</div>';
-        if (refreshBtn) refreshBtn.classList.add('rotating'); // 假设有旋转动画类，或者只是视觉反馈
-
-        console.log("🚀 正在请求 Zeabur 余额接口:", API_URL);
+        if (listContainer) listContainer.innerHTML = renderLoading();
+        if (refreshBtn) { refreshBtn.style.opacity = '0.5'; refreshBtn.style.pointerEvents = 'none'; }
 
         const response = await fetch(API_URL);
-
-        if (!response.ok) {
-            throw new Error(`请求失败: ${response.status} ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`请求失败: ${response.status}`);
 
         const result = await response.json();
-        console.log("📦 余额响应:", result);
-
-        if (!result.success || !result.data) {
-            renderError('数据格式异常');
+        if (!result.success || !result.data || result.data.length === 0) {
+            renderError(result.message || '未找到资源包');
             return;
         }
 
-        const items = result.data;
-
-        if (items.length === 0) {
-            renderError('未找到资源包信息');
-            return;
-        }
-
-        renderBalanceList(items);
+        renderWalletUI(result.data);
 
     } catch (e) {
         console.error("❌ 余额查询错误:", e);
         renderError(e.message);
     } finally {
-        if (refreshBtn) refreshBtn.classList.remove('rotating');
+        if (refreshBtn) { refreshBtn.style.opacity = '1'; refreshBtn.style.pointerEvents = 'auto'; }
     }
 }
 
 /**
- * 渲染资源包列表
+ * 渲染仿微信钱包 UI
  */
-function renderBalanceList(items) {
-    const listContainer = document.getElementById('balance-list');
-    if (!listContainer) return;
+function renderWalletUI(items) {
+    const container = document.getElementById('balance-list');
+    if (!container) return;
 
-    listContainer.innerHTML = '';
-
+    // 汇总数据
+    let totalBalance = 0;
+    let totalUsed = 0;
+    let totalQuota = 0;
     items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'balance-card';
-        // 内联样式，或者之后添加到 CSS 文件中
-        card.style.cssText = `
-            background: var(--bg-secondary);
-            border-radius: 12px;
-            padding: 16px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        `;
-
-        const name = item.name || '未知资源';
-        const total = Math.floor(item.total || 0).toLocaleString();
-        const used = Math.floor(item.used || 0).toLocaleString();
-        const balance = Math.floor(item.balance || 0).toLocaleString();
-
-        // 计算使用百分比
-        let percent = 0;
-        if (item.total > 0) {
-            percent = (item.used / item.total) * 100;
-        }
-        percent = Math.min(100, Math.max(0, percent));
-
-        let progressColor = '#4caf50'; // Green
-        if (percent > 80) progressColor = '#ff9800'; // Orange
-        if (percent > 95) progressColor = '#f44336'; // Red
-
-        card.innerHTML = `
-            <div style="font-weight:600;font-size:16px;margin-bottom:8px;color:var(--text-primary);word-break:break-all;">${name}</div>
-            
-            <div style="display:flex;justify-content:space-between;font-size:14px;color:var(--text-secondary);margin-bottom:4px;">
-                <span>已用: ${used}</span>
-                <span>总额: ${total}</span>
-            </div>
-            
-            <div style="background:var(--bg-tertiary);height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;">
-                <div style="width:${percent}%;background:${progressColor};height:100%;"></div>
-            </div>
-
-            <div style="display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:12px;color:var(--text-secondary);">剩余余额</span>
-                <span style="font-size:18px;font-weight:bold;color:${progressColor};">${balance}</span>
-            </div>
-        `;
-
-        listContainer.appendChild(card);
+        totalBalance += (item.balance || 0);
+        totalUsed += (item.used || 0);
+        totalQuota += (item.total || 0);
     });
 
-    // 添加底部说明
-    const footer = document.createElement('div');
-    footer.style.cssText = "text-align:center;font-size:12px;color:var(--text-secondary);margin-top:20px;opacity:0.6;";
-    footer.innerText = "数据来自火山引擎控制台";
-    listContainer.appendChild(footer);
+    const usagePercent = totalQuota > 0 ? Math.min(100, (totalUsed / totalQuota) * 100) : 0;
+
+    container.innerHTML = `
+        <!-- 顶部钱包卡片 -->
+        <div class="wallet-hero">
+            <div class="wallet-hero-label">剩余额度（字符）</div>
+            <div class="wallet-hero-amount">${formatNumber(totalBalance)}</div>
+            <div class="wallet-hero-sub">
+                <span>总额度 ${formatNumber(totalQuota)}</span>
+                <span>·</span>
+                <span>已使用 ${formatNumber(totalUsed)}</span>
+            </div>
+            <!-- 用量进度 -->
+            <div class="wallet-progress-track">
+                <div class="wallet-progress-fill" style="width:${usagePercent.toFixed(1)}%"></div>
+            </div>
+            <div class="wallet-progress-label">${usagePercent.toFixed(1)}% 已使用</div>
+        </div>
+
+        <!-- 资源包明细 -->
+        <div class="wallet-section-title">资源包明细</div>
+        <div class="wallet-detail-list">
+            ${items.map(item => renderPackageItem(item)).join('')}
+        </div>
+
+        <div class="wallet-footer">数据来自火山引擎 · 点击刷新按钮更新</div>
+    `;
 }
 
 /**
- * 渲染错误信息
+ * 渲染单个资源包项
  */
+function renderPackageItem(item) {
+    const name = item.name || '未知资源';
+    const total = item.total || 0;
+    const used = item.used || 0;
+    const balance = item.balance || 0;
+    const percent = total > 0 ? ((used / total) * 100).toFixed(1) : '0.0';
+
+    // 根据使用量设置颜色
+    let statusColor = '#07c160'; // 绿色 - 健康
+    let statusText = '充足';
+    if (percent > 80) { statusColor = '#fa9d3b'; statusText = '紧张'; }
+    if (percent > 95) { statusColor = '#fa5151'; statusText = '即将耗尽'; }
+
+    return `
+        <div class="wallet-item">
+            <div class="wallet-item-left">
+                <div class="wallet-item-icon" style="background:${statusColor}20;color:${statusColor};">📦</div>
+                <div class="wallet-item-info">
+                    <div class="wallet-item-name">${name}</div>
+                    <div class="wallet-item-status" style="color:${statusColor};">${statusText} · ${percent}% 已用</div>
+                </div>
+            </div>
+            <div class="wallet-item-right">
+                <div class="wallet-item-balance">${formatNumber(balance)}</div>
+                <div class="wallet-item-unit">剩余</div>
+            </div>
+        </div>
+    `;
+}
+
+function formatNumber(n) {
+    return Math.floor(n).toLocaleString('zh-CN');
+}
+
+function renderLoading() {
+    return `
+        <div class="wallet-hero" style="opacity:0.6;">
+            <div class="wallet-hero-label">剩余额度（字符）</div>
+            <div class="wallet-hero-amount" style="animation:pulse 1.5s infinite;">--</div>
+            <div class="wallet-hero-sub"><span>正在查询...</span></div>
+        </div>
+    `;
+}
+
 function renderError(msg) {
-    const listContainer = document.getElementById('balance-list');
-    if (listContainer) {
-        listContainer.innerHTML = `
-            <div style="text-align:center;padding:40px 20px;">
-                <div style="font-size:48px;margin-bottom:10px;">😕</div>
+    const container = document.getElementById('balance-list');
+    if (container) {
+        container.innerHTML = `
+            <div style="text-align:center;padding:60px 20px;">
+                <div style="font-size:48px;margin-bottom:16px;">😕</div>
                 <div style="font-size:16px;color:var(--text-primary);margin-bottom:8px;">加载失败</div>
-                <div style="font-size:12px;color:var(--text-secondary);">${msg}</div>
-                <button onclick="openBalanceApp()" style="margin-top:20px;padding:8px 20px;border-radius:20px;border:none;background:var(--accent-color);color:white;">重试</button>
+                <div style="font-size:13px;color:var(--text-secondary);margin-bottom:24px;">${msg}</div>
+                <button onclick="openBalanceApp()" style="padding:10px 32px;border-radius:24px;border:none;background:var(--accent-color);color:white;font-size:14px;">重试</button>
             </div>
         `;
     }
