@@ -1,5 +1,5 @@
 /* MiniPhone Service Worker - Cache-first for static assets */
-const CACHE_NAME = 'miniphone-v78';
+const CACHE_NAME = 'miniphone-v79';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',

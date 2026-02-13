@@ -27,7 +27,7 @@ import {
 } from './apps/character.js';
 import { isCloudReady } from './services/supabase.js';
 import { startVoiceCall, sendCallMessage, endVoiceCall, cancelVoiceCall, showCallLog } from './apps/voicecall.js';
-import { openBalanceApp } from './apps/balance.js?v=78';
+import { openBalanceApp, refreshBalanceData } from './apps/balance.js?v=79';
 
 // ========== Initialization ========== //
 async function initApp() {
@@ -148,6 +148,7 @@ window.regenerateCharDiary = regenerateCharDiary;
 
 // Balance
 window.openBalanceApp = openBalanceApp;
+window.refreshBalanceData = refreshBalanceData;
 
 // Moments
 window.renderMoments = renderMoments; // exposed if needed by router

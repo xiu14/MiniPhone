@@ -26,7 +26,7 @@ export async function openBalanceApp() {
 /**
  * 刷新余额数据并渲染
  */
-async function refreshBalanceData() {
+export async function refreshBalanceData() {
     const listContainer = document.getElementById('balance-list');
     const refreshBtn = document.getElementById('refresh-balance-btn');
 
